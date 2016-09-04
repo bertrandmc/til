@@ -6,5 +6,6 @@
 
 
 ### TODO
+[JavaScript Interop](http://guide.elm-lang.org/interop/javascript.html)
 [Elm Syntax](http://elm-lang.org/docs/syntax)
 [Building a Live-Validated Signup Form in Elm](http://tech.noredink.com/post/129641182738/building-a-live-validated-signup-form-in-elm)
