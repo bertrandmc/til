@@ -1,4 +1,4 @@
-### Testing with Enzyme, Mocha and Chai
+### Tests Programmatically with Mocha 
 
 I prefer running mocha tests programmatically because it allows me
 to fine control how tests are executed, easily select the test files I
@@ -80,8 +80,10 @@ and add each file to mocha with mocha.addFile (I prefer to keep Spec files close
 If I want to run a specific test file, lets say while coding a React component that has no relation to the rest of the app, I can specify the file and speed things up.
 
 Two things to pay attention on this file:
-*require('babel-register');* is used to hook Babel's require to node's to automatically compile files.
-*mocha.addFile(`${__dirname}/setup.js`);* I use separate files to setup other dependencies, this improves organization and maintainability.
+
+**require('babel-register');** is used to hook Babel's require to node's to automatically compile files.
+
+**mocha.addFile(\`${__dirname}/setup.js\`);** I use separate files to setup other dependencies, this improves organization and maintainability.
 
 The setup.js file is used to execute some hooks and
 require the specific setup files, for example:
