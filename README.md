@@ -9,6 +9,8 @@ A collection of code snippets, small programs and concise write-ups on things I 
 ### Categories
 
 [Elm](https://github.com/Bema/til/tree/master/elm)
+[Javascript](https://github.com/Bema/til/tree/master/javascript)
+  [React](https://github.com/Bema/til/tree/master/javascript/react)
 
 ---
 ## License
