@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Elm</title>
+    </head>
+    <body>
+
+      <div id="elm-component"></div>
+
+      <script src="main.js" charset="utf-8"></script>
+      <script>
+        var node = document.getElementById('elm-component');
+        var app = Elm.MyThing.embed(node);
+      </script>
+    </body>
+</html>
