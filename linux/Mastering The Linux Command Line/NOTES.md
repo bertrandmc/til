@@ -173,3 +173,94 @@ Example with literal search with **fgrep**
 
 **fgrep == grep -F**
 **egrep == grep -E**
+
+
+### Cut
+Print selected parts of file (s) to standard output
+
+`cut -f<fieldnbr> -d<delimiter> filename`
+
+
+### Sed editor
+Sed is a stream editor, it is used to perform baisc text transformation on an input stream (a file or input from a pipeline). Sed is similar to other editors that permit scripted edits (such as `ed`) but it works by making only one pass over the input(s), consequently being more performant, but sed's ability to filter text in a pipeline is what distinguishes it from other types of editors.
+
+`sed SCRIPT INPUTFILE`
+`sed 's/<pattern>/<replace>/' file.txt`
+substitute <pattern> with <replace> value from file.txt
+
+`sed 's/pattern_to_substitute/replace_with/w file_to_write_to.txt' file.txt`
+substitute <pattern> with <replace> value from file.txt and write (w) to file_to_write_to.
+
+We can use sed for searches only:
+`sed '/<search_patter>/w result.txt' file.txt`
+search for pattern in file and write result of search in result.txt
+
+We can use range to specify which occurrence of a pattern we want to act on:
+`sed '0,/<search_pattern>/s/<search_pattern>/<replace_with>' file.txt`
+0, => specifies we want to act on the first occurrence of searched pattern.
+
+We can use regular expressions
+`sed 's/<[^>]*>//' index.html` (replace html tags with nothing)
+
+
+### Tee command
+Reads from standard input and write to standard output and files
+
+`ls | tee newfile.txt`
+
+The above command is the same as `ls > newfile.txt `, but we are using the tee command instead. So we piped the result of `ls` to tee's stdin and we wrote the result to a file.
+
+we can write to multiple files
+`ls | tee file1 file2 file3`
+
+The default write behavior to a file is `overwrite`, but we can append
+`ls | tree -a existingfile`
+
+
+### Test command
+Check file types and compare values. Test command is a beast and man page must be checked for all the options available.
+IMPORTANT: The test command return 0 when the test passes, and if it fails it will return a non-true value, this allows us to chain tasks with with command && or ||.
+`test -f file && echo 'File exists'`
+`test -f file && echo 'File exists' || echo 'File doe not exist'`
+
+`test EXPRESSION`
+
+Test is file index.html exist
+`test -f index.html && echo 'File exists'`
+
+Test if file is writable to user
+`test -w file`
+
+Test if value is greater than another
+`test 5 -gt 2 && echo 'YES'`
+
+Test if a website is responding 200 OK
+`curl -sLI google.com | egrep -ci "200 OK" > /dev/null && echo 'Website is responding OK' || echo 'Website is down'`
+
+Email developer in case of error:
+`curl -sLI google.com | egrep -ci "200 OK" > /dev/null || mail -s 'Website is down, hurry!' bema@xxxx.xxx`
+
+Add that to a cron job and we have a silly monitoring tool.
+
+
+
+### Brackets []
+Brackets can be used to evaluate expressions inside it, it output 0 when true or 1 when false
+`[ 1 -eq 2 ]`.
+
+`[ 1 -eq 2 ]; echo $?`   // `$?` $? always expands to the status of the most recently executed foreground command or pipeline. Linux commands have several parameters or variables that can be use to find out their exit status.
+`[ "string" = "string" ]; echo $?`
+
+
+
+### For loop in the command line
+```
+for name in `ls`
+do
+echo $name
+done;
+```
+
+```
+for name in `ls`; do test -f $name && echo $name is a file || echo $name is a directory; done;
+```
