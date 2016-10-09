@@ -4,6 +4,10 @@
 [Introduction to Elm | Richard Feldman](https://www.youtube.com/watch?v=zBHB9i8e3Kc)
 [Effects as Data | Richard Feldman | Reactive 2015 ](https://www.youtube.com/watch?v=6EdXaWfoslc)
 [GOTO 2016 • Adventures in Elm • Jessica Kerr ](https://www.youtube.com/watch?v=cgXhMc8M4X4)
+[Making Impossible States Impossible | Richard Feldman ](https://www.youtube.com/watch?v=IcgmSRJHu_8)
+[Functional Data Structures | Tessa Kelly ](https://www.youtube.com/watch?v=UBuFHCsz16A)
+[Compilers as Therapists, or Why Elm is Good for ADHD | Luke Westby ](https://www.youtube.com/watch?v=wpYFTG-uViE)
+[0-60 in 15 Minutes: Building a Realtime App With Elm and Horizon | Abadi Kurniawaan ](https://www.youtube.com/watch?v=fTHHn7NhU3w)
 
 
 ### TODO
