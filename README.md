@@ -15,6 +15,8 @@ A collection of code snippets, small programs and concise write-ups on things I 
   - [React](https://github.com/Bema/til/tree/master/javascript/react)
   - [Angular](https://github.com/Bema/til/tree/master/javascript/angular)
 
+- [Git](https://github.com/Bema/til/tree/master/git)
+
 - [Tech Talks](https://github.com/Bema/til/blob/master/talks/NOTES.md)
 
 
