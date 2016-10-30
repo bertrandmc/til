@@ -8,6 +8,7 @@
 [Functional Data Structures | Tessa Kelly ](https://www.youtube.com/watch?v=UBuFHCsz16A)
 [Compilers as Therapists, or Why Elm is Good for ADHD | Luke Westby ](https://www.youtube.com/watch?v=wpYFTG-uViE)
 [0-60 in 15 Minutes: Building a Realtime App With Elm and Horizon | Abadi Kurniawaan ](https://www.youtube.com/watch?v=fTHHn7NhU3w)
+["Code is the Easy Part" | Evan Czaplicki](https://www.youtube.com/watch?v=DSjbTC-hvqQ)
 
 
 ### TODO
