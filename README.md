@@ -20,7 +20,7 @@ A collection of code snippets, small programs and concise write-ups on things I 
 - [Tech Talks](https://github.com/Bema/til/blob/master/talks/NOTES.md)
 
 - Misc
-  [Browser Rendering Optimization](https://github.com/Bema/til/blob/master/browser-optimization/NOTES.md)
+  - [Browser Rendering Optimization](https://github.com/Bema/til/blob/master/browser-optimization/NOTES.md)
 
 ---
 ## License
