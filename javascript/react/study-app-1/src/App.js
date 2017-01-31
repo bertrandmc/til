@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
-import findIndex from 'lodash/findIndex';
 import update from 'react-addons-update';
 
 import {
@@ -40,11 +39,11 @@ class App extends Component {
     event.preventDefault();
   }
 
-  updateTodo = (todo) => {
-    const {todos} = this.state;
-    const index = findIndex(todos, {id: todo.id});
+  updateTodo = (updatedTodo) => {
+    const { todos } = this.state;
+    const updatedIndex = todos.findIndex(todo => todo.id === updatedTodo.id);
     this.setState({
-      todos: update(todos, {[index]: {$merge: todo}})
+      todos: update(todos, {[updatedIndex]: {$merge: updatedTodo}})
     });
   }
 
