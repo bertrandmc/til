@@ -107,3 +107,40 @@ it('should toggle the isComplete prop of a todo', () => {
 
   expect(component.state.todos).toEqual(expectedTodos);
 });
+
+it('should remove a todo', () => {
+  const component = TestUtils.renderIntoDocument(<App />);
+  const todos = [
+    {id: 1, name: "Learn", isComplete: false},
+    {id: 2, name: "Build App", isComplete: true},
+    {id: 3, name: "Ship it!", isComplete: false}
+  ];
+
+  const expectedTodos = [
+    {id: 2, name: "Build App", isComplete: true},
+    {id: 3, name: "Ship it!", isComplete: false}
+  ];
+
+  component.setState({todos: todos, newTodo: ''});
+  component.removeTodo(todos[0]);
+
+  expect(component.state.todos).toEqual(expectedTodos);
+});
+
+it('should not mutate todos array when removing a todo', () => {
+  const component = TestUtils.renderIntoDocument(<App />);
+  const todos = [
+    {id: 1, name: "Learn", isComplete: false},
+    {id: 2, name: "Build App", isComplete: true},
+    {id: 3, name: "Ship it!", isComplete: false}
+  ];
+  const expectedTodos = [
+    {id: 2, name: "Build App", isComplete: true},
+    {id: 3, name: "Ship it!", isComplete: false}
+  ];
+
+  component.setState({todos: todos, newTodo: ''});
+  component.removeTodo(todos[0]);
+
+  expect(component.state.todos).not.toBe(expectedTodos);
+});

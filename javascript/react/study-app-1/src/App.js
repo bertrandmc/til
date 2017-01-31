@@ -35,16 +35,24 @@ class App extends Component {
     });
   }
 
-  handleEmptyTodo = (event) => {
-    event.preventDefault();
-  }
-
   updateTodo = (updatedTodo) => {
     const { todos } = this.state;
     const updatedIndex = todos.findIndex(todo => todo.id === updatedTodo.id);
     this.setState({
       todos: update(todos, {[updatedIndex]: {$merge: updatedTodo}})
     });
+  }
+
+  removeTodo = (removedTodo) => {
+    const { todos } = this.state;
+    const updatedTodos = todos.filter(todo => todo.id !== removedTodo.id);
+    this.setState({
+      todos: updatedTodos
+    });
+  }
+
+  handleEmptyTodo = (event) => {
+    event.preventDefault();
   }
 
   render() {
@@ -61,9 +69,11 @@ class App extends Component {
           <TodoForm
             newTodo={newTodo}
             handleSubmit={handleSubmit}
-            handleChange={this.handleNewTodoChange}
-          />
-        <TodoList todos={todos} handleUpdate={this.updateTodo}/>
+            handleChange={this.handleNewTodoChange} />
+          <TodoList
+            todos={todos}
+            handleUpdate={this.updateTodo}
+            handleRemove={this.removeTodo} />
         </div>
       </div>
     );

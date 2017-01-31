@@ -30,6 +30,24 @@
   text-align: left;
 }
 
+.todo-item {
+
+}
+
+.todo-item__complete .todo-item--label {
+  text-decoration: line-through;
+}
+
+.todo-item--remove {
+  color: rgb(218, 43, 72);
+  text-decoration: none;
+  visibility: hidden;
+}
+
+.todo-item:hover .todo-item--remove {
+  visibility: visible;
+}
+
 input {
   font-size: 20px;
 }
