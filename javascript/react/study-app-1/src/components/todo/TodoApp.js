@@ -5,6 +5,7 @@ import './TodoApp.css';
 
 import { TodoForm } from './TodoForm';
 import { TodoList } from './TodoList';
+import { TodoFilter } from './TodoFilter';
 
 export class TodoApp extends Component {
   state = {
@@ -14,6 +15,10 @@ export class TodoApp extends Component {
       {id: 3, name: "Ship it!", isComplete: false}
     ],
     newTodo: ''
+  }
+
+  static contextTypes = {
+    route: React.PropTypes.string
   }
 
   handleNewTodoChange = (event) => {
@@ -53,8 +58,20 @@ export class TodoApp extends Component {
     event.preventDefault();
   }
 
+  filterTodos(todos, route) {
+    switch(route) {
+      case '/active':
+        return todos.filter(todo => !todo.isComplete);
+      case '/complete':
+        return todos.filter(todo => todo.isComplete);
+      default:
+        return todos;
+    }
+  }
+
   render() {
     const { todos, newTodo } = this.state;
+    const displayTodos = this.filterTodos(todos, this.context.route);
     const handleSubmit = newTodo ? this.saveNewTodo : this.handleEmptyTodo;
 
     return (
@@ -64,9 +81,10 @@ export class TodoApp extends Component {
           handleSubmit={handleSubmit}
           handleChange={this.handleNewTodoChange} />
         <TodoList
-          todos={todos}
+          todos={displayTodos}
           handleUpdate={this.updateTodo}
           handleRemove={this.removeTodo} />
+        <TodoFilter />
       </div>
     )
   }

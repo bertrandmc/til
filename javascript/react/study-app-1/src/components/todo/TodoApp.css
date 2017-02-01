@@ -24,7 +24,12 @@
 
 .todo-filter a {
   margin: 0 5px;
-  color: rgb(95, 198, 139)
+  color: rgb(95, 198, 139);
+  text-decoration: none;
+}
+
+.todo-filter a.active {
+  text-decoration: underline;
 }
 
 .todo-app input {

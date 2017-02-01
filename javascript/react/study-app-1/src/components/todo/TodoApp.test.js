@@ -145,3 +145,43 @@ it('should not mutate todos array when removing a todo', () => {
 
   expect(component.state.todos).not.toBe(expectedTodos);
 });
+
+it('shoull return complete todos', () => {
+  const component = TestUtils.renderIntoDocument(<TodoApp />);
+  const todos = [
+    {id: 1, name: "Learn", isComplete: false},
+    {id: 2, name: "Build App", isComplete: true},
+    {id: 3, name: "Ship it!", isComplete: false}
+  ];
+  const expectedTodos = [
+    {id: 2, name: "Build App", isComplete: true}
+  ];
+
+  expect(component.filterTodos(todos, '/complete')).toEqual(expectedTodos);
+});
+
+it('shoull return non-complete todos', () => {
+  const component = TestUtils.renderIntoDocument(<TodoApp />);
+  const todos = [
+    {id: 1, name: "Learn", isComplete: false},
+    {id: 2, name: "Build App", isComplete: true},
+    {id: 3, name: "Ship it!", isComplete: false}
+  ];
+  const expectedTodos = [
+    {id: 1, name: "Learn", isComplete: false},
+    {id: 3, name: "Ship it!", isComplete: false}
+  ];
+
+  expect(component.filterTodos(todos, '/active')).toEqual(expectedTodos);
+});
+
+it('shoull return all todos', () => {
+  const component = TestUtils.renderIntoDocument(<TodoApp />);
+  const todos = [
+    {id: 1, name: "Learn", isComplete: false},
+    {id: 2, name: "Build App", isComplete: true},
+    {id: 3, name: "Ship it!", isComplete: false}
+  ];
+
+  expect(component.filterTodos(todos, '/')).toEqual(todos);
+});
