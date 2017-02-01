@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+import storage from '../services/Storage';
 
 const getCurrentPath = () => {
   const path = document.location.pathname;
@@ -12,13 +13,15 @@ export class Router extends Component {
 
   static childContextTypes = {
     route: React.PropTypes.string,
-    linkHandler: React.PropTypes.func
+    linkHandler: React.PropTypes.func,
+    storage: React.PropTypes.object
   }
 
   getChildContext() {
     return {
       route: this.state.route,
-      linkHandler: this.handleLinkClick
+      linkHandler: this.handleLinkClick,
+      storage: storage
     };
   }
 
