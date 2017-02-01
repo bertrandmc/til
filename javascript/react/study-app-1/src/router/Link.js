@@ -13,7 +13,7 @@ export class Link extends Component {
 
   render() {
     const {to} = this.props;
-    const activeClass = this.context.route === this.props.to ? 'active' : '';
+    const activeClass = this.context.route === to ? 'active' : '';
     return <a className={activeClass} href="#" onClick={this.handleClick}>{this.props.children}</a>
   }
 }
