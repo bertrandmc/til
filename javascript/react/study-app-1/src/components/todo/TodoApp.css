@@ -1,0 +1,40 @@
+.todo-app {
+  padding-top: 20px;
+  display: inline-block;
+  text-align: left;
+}
+
+.todo-item {
+
+}
+
+.todo-item__complete .todo-item--label {
+  text-decoration: line-through;
+}
+
+.todo-item--remove {
+  color: rgb(218, 43, 72);
+  text-decoration: none;
+  visibility: hidden;
+}
+
+.todo-item:hover .todo-item--remove {
+  visibility: visible;
+}
+
+.todo-filter a {
+  margin: 0 5px;
+  color: rgb(95, 198, 139)
+}
+
+.todo-app input {
+  font-size: 20px;
+}
+
+.todo-app ul {
+  padding: 0;
+}
+
+.todo-app li {
+  list-style-type: none;
+}

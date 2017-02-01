@@ -1,3 +1,2 @@
 
-export { TodoForm } from './TodoForm';
-export { TodoList } from './TodoList';
+export { TodoApp } from './TodoApp';
