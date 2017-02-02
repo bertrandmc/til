@@ -1,9 +1,11 @@
 import React from 'react';
 import classNames from 'classnames';
 
+import {StatusButton} from './components';
+
 export const TodoItem = (props) => {
   const { todo, handleUpdate, handleRemove } = props;
-  const handleToggle = event => handleUpdate({...todo, isComplete: event.target.checked})
+  const handleToggle = status => handleUpdate({...todo, isComplete: status})
   const deleteTodo = event => handleRemove(todo);
 
   return (
@@ -11,10 +13,10 @@ export const TodoItem = (props) => {
       <a href="#"
         className="todo-item--remove"
         onClick={deleteTodo}>&#10007;</a>
-      <input
-        type="checkbox"
-        checked={todo.isComplete}
-        onChange={handleToggle}
+
+      <StatusButton
+        status={todo.isComplete}
+        handleToggle={handleToggle}
       />
       <span className="todo-item--label">{todo.name}</span>
     </li>
