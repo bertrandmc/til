@@ -99,11 +99,12 @@ export class TodoApp extends Component {
           newTodo={newTodo}
           handleSubmit={handleSubmit}
           handleChange={this.handleNewTodoChange} />
+        <TodoFilter />
         <TodoList
           todos={displayTodos}
           handleUpdate={this.updateTodo}
           handleRemove={this.removeTodo} />
-        <TodoFilter />
+
       </div>
     )
   }
