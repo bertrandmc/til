@@ -3,7 +3,7 @@ import React from 'react';
 import { TodoItem } from './TodoItem';
 
 export const TodoList = (props) => (
-  <div className="Todo-List">
+  <div className="todo-list">
     <ul>
       {props.todos.map(todo =>
         <TodoItem
