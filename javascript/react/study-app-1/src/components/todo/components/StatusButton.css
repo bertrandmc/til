@@ -1,0 +1,60 @@
+.status-button {
+  display: inline-block;
+  width:1.3em;
+  height: 100%;
+  text-align: center;
+  position: relative;
+}
+
+.status-button svg {
+  display: inline-block;
+  z-index: 2;
+}
+
+.status-button svg:first-of-type {
+  position: absolute;
+  top: -2px;
+  z-index: 1;
+}
+
+.status-button-check {
+
+}
+
+.status-button-circle {
+  width: 100%;
+  padding-bottom: 100%;
+  background-color: yellow;
+  position: absolute;
+  top: 0;
+  z-index: 1;
+}
+
+.status-button-checkmark {
+  stroke-dasharray: 130px 130px;
+  stroke-dashoffset: 130px;
+  -webkit-transition: stroke-dashoffset 3s linear 0s;
+  transition: stroke-dashoffset 500ms ease-in-out;
+  stroke: #006837;
+}
+
+.status-button-check:first-of-type {
+  position: absolute;
+  top: -2px;
+  stroke-dashoffset: 0;
+  stroke: #000;
+}
+
+.status-button-checkmark__is-complete {
+  stroke-dashoffset: 0;
+}
+
+
+.status-button-pending {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background-color: rgb(250, 231, 62);
+  border-radius: 5px;
+  display: inline-block;
+}
