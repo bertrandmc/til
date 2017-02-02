@@ -3,17 +3,15 @@ import React from 'react';
 import { TodoItem } from './TodoItem';
 
 export const TodoList = (props) => (
-  <div className="todo-list">
-    <ul>
-      {props.todos.map(todo =>
-        <TodoItem
-          key={todo.id}
-          todo={todo}
-          handleUpdate={props.handleUpdate}
-          handleRemove={props.handleRemove} />
-      )}
-    </ul>
-  </div>
+  <ul className="todo-list">
+    {props.todos.map(todo =>
+      <TodoItem
+        key={todo.id}
+        todo={todo}
+        handleUpdate={props.handleUpdate}
+        handleRemove={props.handleRemove} />
+    )}
+  </ul>
 );
 
 TodoList.propTypes = {
