@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import update from 'react-addons-update';
+import shortid from 'shortid';
 
 import './TodoApp.css';
 
@@ -47,7 +48,7 @@ export class TodoApp extends Component {
   saveNewTodo = (event) => {
     event.preventDefault();
     const { todos, newTodo } = this.state;
-    const todoObject = {id: todos.length + 1, name: newTodo, isComplete: false};
+    const todoObject = {id: shortid.generate(), name: newTodo, isComplete: false};
 
     this.setState({
       todos: [...todos, todoObject],
