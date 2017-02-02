@@ -1,0 +1,45 @@
+.device-wrapper-content {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.device-wrapper-mobile {
+  position: relative;
+  background-color: #fff;
+  border: 4px solid #d9dbdc;
+  padding: 18% 10px;
+  border-radius: 50px;
+}
+
+.device-wrapper-mobile .device-wrapper-screen {
+  position: relative;
+  width: 100%;
+  /* 1334:750 iphone 7 ratio */
+  padding-bottom: 177.7%;
+  background-color: rgb(161, 235, 221);
+  border: 2px solid black;
+  border-radius: 1px;
+}
+
+.device-wrapper-screen::before{
+   content: '';
+   position: absolute;
+   top: -6%;
+   left: 40%;
+   width: 20%;
+   height: 4px;
+   border-radius: 2px;
+   background-color: #b5b7b9;
+}
+
+.device-wrapper-screen::after{
+   content: '';
+   position: absolute;
+   bottom: -10%;
+   left: 42.5%;
+   width: 13%;
+   padding-bottom: 13%;
+   border-radius: 50%;
+   border: 2px solid #b5b7b9;
+}
