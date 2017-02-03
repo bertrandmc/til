@@ -38,7 +38,7 @@ export class TodoApp extends Component {
   }
 
   createTodo = () => {
-    const newTodo = {id: shortid.generate(), title: '', isEditing: true, isComplete: false};
+    const newTodo = {id: shortid.generate(), title: '', isComplete: false};
 
     this.setState((prevState, props) => ({
       todos: [newTodo, ...prevState.todos]
