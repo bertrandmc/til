@@ -19,7 +19,18 @@ export class TodoItem extends Component {
 
   componentWillReceiveProps(nextProps) {
     this.setState((prevState, props) => {
-      return {todo: nextProps.todo};
+      /**
+        * if edit mode was disabled we must delay removing the edit action buttons to allow
+        * element to animate close
+        **/
+      const holdEditingTools = prevState.todo.isEditing && !nextProps.todo.isEditing;
+      setTimeout(() => {
+        this.setState((prevState) => ({
+          holdEditingTools: nextProps.todo.isEditing
+        }));
+      }, 300);
+
+      return {todo: nextProps.todo, holdEditingTools: holdEditingTools};
     });
   }
 
@@ -44,11 +55,10 @@ export class TodoItem extends Component {
     }, 3000);
 
     this.setState({removeActive: removeActiveTimeoutId});
-
   }
 
   render() {
-    const { todo, removeActive } = this.state;
+    const { todo, removeActive, holdEditingTools } = this.state;
     const { toggleEditMode } = this.props;
 
     return (
@@ -69,7 +79,7 @@ export class TodoItem extends Component {
               onChange={event => this.handleSave('title', event.target.value)}
               value={todo.title}/>}
 
-      {todo.isEditing &&
+      {(todo.isEditing || holdEditingTools)&&
         <div className="todo-item-actions">
           <div onClick={this.handleRemove}
               className={classNames("todo-item-action-button", {"todo-item-action-button__active": removeActive})} >
