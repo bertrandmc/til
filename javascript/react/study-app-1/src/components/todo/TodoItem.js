@@ -1,30 +1,91 @@
-import React from 'react';
+import React, {Component} from 'react';
 import classNames from 'classnames';
+import debounce from 'lodash/debounce';
 
+import IconDelete from 'react-icons/lib/md/delete';
 import {StatusButton} from './components';
 
-export const TodoItem = (props) => {
-  const { todo, handleUpdate, handleRemove } = props;
-  const handleToggle = status => handleUpdate({...todo, isComplete: status})
-  const deleteTodo = event => handleRemove(todo);
+export class TodoItem extends Component {
 
-  return (
-    <li className={classNames('todo-item', {'todo-item__complete': todo.isComplete})}>
-      <a href="#"
-        className="todo-item--remove"
-        onClick={deleteTodo}>&#10007;</a>
+  constructor(props) {
+    super(props);
 
-      <StatusButton
-        status={todo.isComplete}
-        handleToggle={handleToggle}
-      />
-      <span className="todo-item--label">{todo.name}</span>
-    </li>
-  )
-};
+    this.state = {
+      todo: props.todo
+    }
+
+    this.debouncedHandleSaveTodo = debounce(props.handleSaveTodo, 300);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.setState((prevState, props) => {
+      return {todo: nextProps.todo};
+    });
+  }
+
+  handleSave = (propName, value) => {
+    this.setState((prevState, props) => {
+      const updatedTodod = {...prevState.todo, [propName]: value};
+      this.debouncedHandleSaveTodo(updatedTodod);
+      return {todo: updatedTodod};
+    });
+  }
+
+  handleRemove = (event) => {
+    event.stopPropagation();
+
+    if(this.state.removeActive) {
+      clearTimeout(this.state.removeActive);
+      return this.props.handleRemoveTodo(this.state.todo);
+    }
+
+    const removeActiveTimeoutId = setTimeout(() => {
+      this.setState({removeActive: false});
+    }, 3000);
+
+    this.setState({removeActive: removeActiveTimeoutId});
+
+  }
+
+  render() {
+    const { todo, removeActive } = this.state;
+    const { toggleEditMode } = this.props;
+
+    return (
+      <li className={classNames('todo-item', {'todo-item__complete': todo.isComplete, 'todo-item__editing': todo.isEditing})}
+          onClick={() => toggleEditMode(todo)}>
+
+        <StatusButton
+          status={todo.isComplete}
+          handleToggle={status => this.handleSave('isComplete', status)}
+        />
+
+      {!todo.isEditing && <div className="todo-item-label">{todo.title}</div>}
+        { todo.isEditing &&
+          <input type="text"
+              autoFocus={!todo.title}
+              className="todo-item-label-input"
+              onClick={event => event.stopPropagation()}
+              onChange={event => this.handleSave('title', event.target.value)}
+              value={todo.title}/>}
+
+      {todo.isEditing &&
+        <div className="todo-item-actions">
+          <div onClick={this.handleRemove}
+              className={classNames("todo-item-action-button", {"todo-item-action-button__active": removeActive})} >
+            <IconDelete />
+          </div>
+        </div>
+      }
+      </li>
+    )
+  }
+}
+
 
 TodoItem.propTypes = {
   todo: React.PropTypes.object.isRequired,
-  handleUpdate: React.PropTypes.func.isRequired,
-  handleRemove: React.PropTypes.func.isRequired
+  handleSaveTodo: React.PropTypes.func.isRequired,
+  toggleEditMode: React.PropTypes.func.isRequired,
+  handleRemoveTodo: React.PropTypes.func.isRequired,
 };

@@ -4,8 +4,15 @@ import classNames from 'classnames';
 import './StatusButton.css';
 
 export const StatusButton = (props) => {
+
+  const handleStatusToggle = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    props.handleToggle(!props.status)
+  }
+
   return (
-    <span className="status-button" onClick={() => props.handleToggle(!props.status)}>
+    <span className="status-button" onClick={handleStatusToggle}>
       <svg height="100%" width="100%" version="1.1" viewBox="0 0 90.594 59.714" x="0px" y="0px" xmlSpace="preserve">
         <polyline fill="none" points="1.768,23.532 34.415,56.179 88.826,1.768" stroke="rgba(192,192,192,0.5)" strokeWidth="5"/>
       </svg>

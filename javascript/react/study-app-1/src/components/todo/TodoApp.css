@@ -5,44 +5,99 @@
   color-red: #C73226
   color-yellow: #F2BB16
   color-green: #72A64E
+  color-water-mark: rgba(192,192,192,0.5)
 
 */
 
 .todo-app {
-  padding-top: 20px;
   display: block;
-  background-color: #E3E3E3;
   height: 100%;
   font-size: 16px;
+  background-color: #E3E3E3;
+}
 
+.todo-app header {
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+
+.todo-app-header-pusher {
+  width: 100%;
+  height: 80px;
+}
+
+.todo-app-menu {
+  height: 40px;
+  width: 100%;
+  background-color: #7E8AA2;
+  color: #E3E3E3;
+}
+
+.todo-app-menu-action {
+  height: 40px;
+  width: 40px;
+}
+
+.todo-app-menu-action.new-todo {
+  float: right;
+  padding: 6px;
+}
+
+.todo-app-menu-action.new-todo svg {
+  width: 28px;
+  height: 28px;
 }
 
 .todo-list {
+  position: absolute;
+  top: 80px;
+  bottom: 0;
+  width: 100%;
   padding: 0;
   margin: 0;
+
+  overflow: auto;
 }
 
 .todo-item {
   height: 40px;
   font-size: .9em;
-  padding: 0 10px;
+  padding: 0 10px 10px;
   list-style-type: none;
   border-bottom: 1px solid #fff;
 }
 
-.todo-item .todo-item--label,
+.todo-item.todo-item__editing {
+  height: auto;
+}
+
+.todo-item-label,
 .todo-item .status-button {
   float: left;
 }
 
-.todo-item .todo-item--label {
+.todo-item-label,
+.todo-item-label-input {
+  width: 85%;
+}
+
+.todo-item-label {
   display: inline-block;
+  text-align: left;
   line-height: 40px;
   color: #263248;
   transition: opacity 0.3s linear;
 }
 
-.todo-item__complete .todo-item--label {
+.todo-item-label-input {
+  margin-top: 10px;
+  background-color: transparent;
+  border: none;
+  outline: none;
+}
+
+.todo-item__complete .todo-item-label {
   text-decoration: line-through;
   opacity: .3;
 
@@ -59,9 +114,40 @@
 }
 
 .todo-item .status-button {
-  margin-right: 10px;
+  height: 40px;
+  width: 39px;
+  margin-left: -10px;
+  padding-right: 10px;
+  padding-left: 10px;
 }
 
+.todo-item-actions {
+  position: relative;
+  width: 100%;
+  border-top: 1px solid rgba(192,192,192,0.5);
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+.todo-item-action-button {
+  display: inline-block;
+  min-width: 40px;
+  min-height: 35px;
+  margin: 0 5%;
+  font-size: 25px;
+  color: #fff;
+  border: 1px solid;
+  border-color: #fff;
+  transition: all 0.3s linear;
+}
+
+.todo-item-action-button__active {
+  color: #F2BB16;
+  border-color: #F2BB16;
+}
+
+
+/* Todo Filter */
 .todo-filter {
   height: 40px;
   font-size: 14px;

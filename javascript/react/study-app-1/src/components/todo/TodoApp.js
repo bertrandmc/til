@@ -2,9 +2,10 @@ import React, {Component} from 'react';
 import update from 'react-addons-update';
 import shortid from 'shortid';
 
+import AddIcon from 'react-icons/lib/md/add-circle-outline';
+
 import './TodoApp.css';
 
-import { TodoForm } from './TodoForm';
 import { TodoList } from './TodoList';
 import { TodoFilter } from './TodoFilter';
 
@@ -22,10 +23,7 @@ export class TodoApp extends Component {
     // For now I'll ignore if storage is not available in context where TodoApp is being used.
     const persistedTodos = (storage && storage.getItem('todos')) || [];
 
-    this.state = Object.assign({
-      newTodo: '',
-      todos: persistedTodos
-    });
+    this.state = {todos: persistedTodos};
   }
 
   componentWillUpdate = (nextProps, nextState) => {
@@ -39,24 +37,15 @@ export class TodoApp extends Component {
     storage && storage.saveItem('todos', todos);
   }
 
-  handleNewTodoChange = (event) => {
-    this.setState({
-      newTodo: event.target.value
-    });
+  createTodo = () => {
+    const newTodo = {id: shortid.generate(), title: '', isEditing: true, isComplete: false};
+
+    this.setState((prevState, props) => ({
+      todos: [newTodo, ...prevState.todos]
+    }));
   }
 
-  saveNewTodo = (event) => {
-    event.preventDefault();
-    const { todos, newTodo } = this.state;
-    const todoObject = {id: shortid.generate(), name: newTodo, isComplete: false};
-
-    this.setState({
-      todos: [...todos, todoObject],
-      newTodo: ''
-    });
-  }
-
-  updateTodo = (updatedTodo) => {
+  saveTodo = (updatedTodo) => {
     const { todos } = this.state;
     const updatedIndex = todos.findIndex(todo => todo.id === updatedTodo.id);
     this.setState({
@@ -67,13 +56,11 @@ export class TodoApp extends Component {
   removeTodo = (removedTodo) => {
     const { todos } = this.state;
     const updatedTodos = todos.filter(todo => todo.id !== removedTodo.id);
-    this.setState({
-      todos: updatedTodos
-    });
+    this.setState({todos: updatedTodos});
   }
 
-  handleEmptyTodo = (event) => {
-    event.preventDefault();
+  toggleTodoEdit = (todo) => {
+    this.saveTodo({...todo, isEditing: !todo.isEditing});
   }
 
   filterTodos(todos, route) {
@@ -88,24 +75,28 @@ export class TodoApp extends Component {
   }
 
   render() {
-    const { todos, newTodo } = this.state;
+    const {
+      todos
+    } = this.state;
+
     const displayTodos = this.filterTodos(todos, this.context.route);
-    const handleSubmit = newTodo ? this.saveNewTodo : this.handleEmptyTodo;
-
-
 
     return (
       <div className="todo-app">
-        <TodoForm
-          newTodo={newTodo}
-          handleSubmit={handleSubmit}
-          handleChange={this.handleNewTodoChange} />
-        <TodoFilter />
+        <header>
+          <div className="todo-app-menu">
+              <div className="todo-app-menu-action new-todo" onClick={this.createTodo}>
+                <AddIcon />
+              </div>
+          </div>
+          <TodoFilter />
+        </header>
+
         <TodoList
           todos={displayTodos}
-          handleUpdate={this.updateTodo}
-          handleRemove={this.removeTodo} />
-
+          handleSaveTodo={this.saveTodo}
+          handleRemoveTodo={this.removeTodo}
+          toggleEditMode={this.toggleTodoEdit}/>
       </div>
     )
   }
