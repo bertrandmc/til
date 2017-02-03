@@ -24,6 +24,8 @@ describe('TodoItem', () => {
     };
   });
 
+  jest.useFakeTimers();
+
   it('renders without crashing', () => {
     const div = document.createElement('div');
     ReactDOM.render(<TodoItem {...mockedProps} />, div);
@@ -77,42 +79,7 @@ describe('TodoItem', () => {
     expect(component.debouncedHandleSaveTodo).toHaveBeenCalledWith(component.state.todo);
   });
 
-  it('should invoke event.stopPropagation when handleRemove', () => {
-    const component = TestUtils.renderIntoDocument(<TodoItem {...mockedProps} />);
-    component.handleRemove(mockedEvent)
-    expect(mockedEvent.stopPropagation).toHaveBeenCalled();
-  });
-
-  it('should set removeActive with timer id number when handleRemove', () => {
-    const component = TestUtils.renderIntoDocument(<TodoItem {...mockedProps} />);
-    component.handleRemove(mockedEvent)
-    expect(component.state.removeActive).toBeGreaterThan(0);
-  });
-
-  it('should unset removeActive after 300ms handleRemove', () => {
-    jest.useFakeTimers();
-    const component = TestUtils.renderIntoDocument(<TodoItem {...mockedProps} />);
-    component.handleRemove(mockedEvent)
-    expect(component.state.removeActive).toBeGreaterThan(0);
-
-    jest.runAllTimers();
-
-    expect(component.state.removeActive).toBe(false);
-  });
-
-  it('should invoke handleRemoveTodo when removeActive is set and handleRemove in invoked for second time', () => {
-    const component = TestUtils.renderIntoDocument(<TodoItem {...mockedProps} />);
-
-    component.handleRemove(mockedEvent)
-    expect(component.state.removeActive).toBeGreaterThan(0);
-
-    component.handleRemove(mockedEvent);
-    expect(mockedProps.handleRemoveTodo).toHaveBeenCalledWith(component.state.todo);
-  });
-
-
   it('should toggle edit mode to true when toggleEditMode', () => {
-    // jest.useFakeTimers();
     const component = TestUtils.renderIntoDocument(<TodoItem {...mockedProps} />);
     expect(component.state.isEditing).toBe(false);
 

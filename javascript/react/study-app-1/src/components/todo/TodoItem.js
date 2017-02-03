@@ -2,8 +2,7 @@ import React, {Component} from 'react';
 import classNames from 'classnames';
 import debounce from 'lodash/debounce';
 
-import IconDelete from 'react-icons/lib/md/delete';
-import {StatusButton} from './components';
+import {StatusButton, RemoveButton} from './components';
 
 export class TodoItem extends Component {
 
@@ -32,21 +31,6 @@ export class TodoItem extends Component {
     });
   }
 
-  handleRemove = (event) => {
-    event.stopPropagation();
-
-    if(this.state.removeActive) {
-      clearTimeout(this.state.removeActive);
-      return this.props.handleRemoveTodo(this.state.todo);
-    }
-
-    const removeActiveTimeoutId = setTimeout(() => {
-      this.setState({removeActive: false});
-    }, 3000);
-
-    this.setState({removeActive: removeActiveTimeoutId});
-  }
-
   toggleEditMode = () => {
     this.setState((prevState, props) => {
 
@@ -70,7 +54,7 @@ export class TodoItem extends Component {
   }
 
   render() {
-    const { todo, removeActive, holdEditingTools, isEditing } = this.state;
+    const { todo, holdEditingTools, isEditing } = this.state;
 
     return (
       <li className={classNames('todo-item', {'todo-item__complete': todo.isComplete, 'todo-item__editing': isEditing})}
@@ -93,10 +77,7 @@ export class TodoItem extends Component {
 
         {(isEditing || holdEditingTools) &&
           <div className="todo-item-actions">
-            <div onClick={this.handleRemove}
-                className={classNames("todo-item-action-button", {"todo-item-action-button__active": removeActive})} >
-              <IconDelete />
-            </div>
+            <RemoveButton  handleRemoveTodo={this.props.handleRemoveTodo} todo={todo} />
           </div>
         }
       </li>
