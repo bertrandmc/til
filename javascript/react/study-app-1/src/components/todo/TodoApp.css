@@ -122,10 +122,10 @@
   padding-top: 1px;  /* fix small movement when alternating input and label */
 }
 
-.todo-item__complete .todo-item-label {
+.todo-item__complete .todo-item-label,
+.todo-item__complete .todo-item-label-input{
   text-decoration: line-through;
   opacity: .3;
-
 }
 
 .todo-item--remove {
@@ -144,6 +144,7 @@
   padding-top: 10px;
   margin-top: 10px;
   margin: 0 10px;
+  text-align: right;
   /*border-top: 1px solid rgba(192,192,192,0.5);*/
 }
 
@@ -153,6 +154,7 @@
   min-height: 35px;
   margin: 0 5%;
   font-size: 25px;
+  text-align: center;
   color: #fff;
   border: 1px solid;
   border-color: #fff;

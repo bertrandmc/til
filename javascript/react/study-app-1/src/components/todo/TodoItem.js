@@ -10,9 +10,10 @@ export class TodoItem extends Component {
   constructor(props) {
     super(props);
 
-    this.state = {
-      todo: props.todo
-    }
+
+    const newState = {todo: props.todo};
+    if(!props.todo.title) newState.isEditing = true;
+    this.state = newState;
 
     this.debouncedHandleSaveTodo = debounce(props.handleSaveTodo, 300);
   }
@@ -71,7 +72,6 @@ export class TodoItem extends Component {
 
   render() {
     const { todo, removeActive, holdEditingTools, isEditing } = this.state;
-    console.log(isEditing);
 
     return (
       <li className={classNames('todo-item', {'todo-item__complete': todo.isComplete, 'todo-item__editing': isEditing})}
@@ -88,6 +88,7 @@ export class TodoItem extends Component {
               autoFocus={!todo.title}
               className="todo-item-label-input"
               onClick={event => event.stopPropagation()}
+              onDoubleClick={this.toggleEditMode}
               onChange={event => this.handleSave('title', event.target.value)}
               value={todo.title}/>}
 
