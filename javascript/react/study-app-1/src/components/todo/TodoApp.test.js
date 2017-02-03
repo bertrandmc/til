@@ -13,48 +13,14 @@ describe('TodoApp', () => {
     ReactDOM.render(<TodoApp />, div);
   });
 
-  it('should handle new todo changes', () => {
+  it('should create a new todo object and add it to todos state', () => {
     const component = TestUtils.renderIntoDocument(<TodoApp />);
-
-    const mockEvent = {
-      preventDefault: jest.fn(),
-      target: {value:'test'}
-    };
-
-    component.handleNewTodoChange(mockEvent);
-
-    expect(component.state.newTodo).toEqual(mockEvent.target.value);
-  });
-
-  it('should invoke event.preventDefault when saveNewTodo', () => {
-    const component = TestUtils.renderIntoDocument(<TodoApp />);
-
-    const spy = jest.fn();
-    const mockEvent = {
-      preventDefault: spy,
-      target: {value:'test'}
-    };
-
-    component.saveNewTodo(mockEvent);
-
-    expect(spy).toHaveBeenCalled();
-  });
-
-  it('should add new todo to todo list', () => {
-    const component = TestUtils.renderIntoDocument(<TodoApp />);
-
-    const spy = jest.fn();
-    const mockEvent = {preventDefault: spy};
-    const expectedTodo = {id: 1, name: 'test', isComplete: false};
-
-    component.setState({todos: [], newTodo: 'test'});
-    component.saveNewTodo(mockEvent);
-
+    expect(component.state.todos.length).toEqual(0);
+    component.createTodo();
     expect(component.state.todos.length).toEqual(1);
-    expect(component.state.todos[0]).toEqual(expectedTodo);
   });
 
-  it('should not mutate todo list when adding a new todo', () => {
+  it('should not mutate todo list when creating new todo', () => {
     const component = TestUtils.renderIntoDocument(<TodoApp />);
 
     const oldTodos = [];
@@ -62,53 +28,34 @@ describe('TodoApp', () => {
     const mockEvent = {preventDefault: spy};
     const expectedTodo = {id: 1, name: 'test', isComplete: false};
 
-    component.setState({todos: oldTodos, newTodo: 'test'});
-    component.saveNewTodo(mockEvent);
+    component.setState({todos: oldTodos});
+    component.createTodo();
 
     expect(component.state.todos).not.toBe(oldTodos);
   });
 
-  it('should not add a new todo when todo name is empty', () => {
+  it('should save todo changes', () => {
     const component = TestUtils.renderIntoDocument(<TodoApp />);
+    const todo = {id: 123, title: '', isEditing: true, isComplete: false}
+    const updatedTodo = {...todo, isComplete: true};
 
-    const oldTodos = [];
-    const spy = jest.fn();
-    const mockEvent = {preventDefault: spy};
-    const expectedTodo = {id: 1, name: 'test', isComplete: false};
+    component.setState({todos: [todo]});
+    component.saveTodo(updatedTodo);
 
-    component.setState({todos: oldTodos, newTodo: ''});
-    component.saveNewTodo(mockEvent);
-
-    expect(component.state.todos.length).toEqual(1);
+    expect(component.state.todos[0]).toEqual(updatedTodo);
   });
 
-  it('should invoke preventDefault when handling empty todo', () => {
+  it('should not mutate todo list and todo object when saving todo changes', () => {
     const component = TestUtils.renderIntoDocument(<TodoApp />);
-    const mockEvent = {preventDefault: jest.fn()};
+    const todo = {id: 123, title: '', isEditing: true, isComplete: false}
+    const updatedTodo = {...todo, isComplete: true};
+    const previousTodoState = component.state.todos;
 
-    component.handleEmptyTodo(mockEvent);
+    component.setState({todos: [todo]});
+    component.saveTodo(updatedTodo);
 
-    expect(mockEvent.preventDefault).toHaveBeenCalled();
-  });
-
-  it('should toggle the isComplete prop of a todo', () => {
-    const component = TestUtils.renderIntoDocument(<TodoApp />);
-    const todos = [
-      {id: 1, name: "Learn", isComplete: false},
-      {id: 2, name: "Build App", isComplete: true},
-      {id: 3, name: "Ship it!", isComplete: false}
-    ];
-
-    const expectedTodos = [
-      {id: 1, name: "Learn", isComplete: false},
-      {id: 2, name: "Build App", isComplete: true},
-      {id: 3, name: "Ship it fast!", isComplete: true}
-    ];
-
-    component.setState({todos: todos, newTodo: ''});
-    component.updateTodo(expectedTodos[2]);
-
-    expect(component.state.todos).toEqual(expectedTodos);
+    expect(component.state.todos).not.toBe(previousTodoState);
+    expect(component.state.todos[0]).not.toBe(todo);
   });
 
   it('should remove a todo', () => {
@@ -148,7 +95,7 @@ describe('TodoApp', () => {
     expect(component.state.todos).not.toBe(expectedTodos);
   });
 
-  it('should return complete todos', () => {
+  it('should filter and return complete todos', () => {
     const component = TestUtils.renderIntoDocument(<TodoApp />);
     const todos = [
       {id: 1, name: "Learn", isComplete: false},
@@ -162,7 +109,7 @@ describe('TodoApp', () => {
     expect(component.filterTodos(todos, '/complete')).toEqual(expectedTodos);
   });
 
-  it('should return non-complete todos', () => {
+  it('should filter and return non-complete todos', () => {
     const component = TestUtils.renderIntoDocument(<TodoApp />);
     const todos = [
       {id: 1, name: "Learn", isComplete: false},
@@ -177,7 +124,7 @@ describe('TodoApp', () => {
     expect(component.filterTodos(todos, '/active')).toEqual(expectedTodos);
   });
 
-  it('should return all todos', () => {
+  it('should filter and return all todos', () => {
     const component = TestUtils.renderIntoDocument(<TodoApp />);
     const todos = [
       {id: 1, name: "Learn", isComplete: false},
