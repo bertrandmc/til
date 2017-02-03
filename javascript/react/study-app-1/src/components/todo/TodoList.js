@@ -11,8 +11,7 @@ export const TodoList = (props) => (
         key={todo.id}
         todo={todo}
         handleSaveTodo={props.handleSaveTodo}
-        handleRemoveTodo={props.handleRemoveTodo}
-        toggleEditMode={props.toggleEditMode}/>
+        handleRemoveTodo={props.handleRemoveTodo} />
     )}
   </ul>
 );
@@ -20,6 +19,5 @@ export const TodoList = (props) => (
 TodoList.propTypes = {
   todos: React.PropTypes.array.isRequired,
   handleSaveTodo: React.PropTypes.func.isRequired,
-  handleRemoveTodo: React.PropTypes.func.isRequired,
-  toggleEditMode: React.PropTypes.func.isRequired
+  handleRemoveTodo: React.PropTypes.func.isRequired
 };

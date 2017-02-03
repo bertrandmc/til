@@ -59,10 +59,6 @@ export class TodoApp extends Component {
     this.setState({todos: updatedTodos});
   }
 
-  toggleTodoEdit = (todo) => {
-    this.saveTodo({...todo, isEditing: !todo.isEditing});
-  }
-
   filterTodos(todos, route) {
     switch(route) {
       case '/active':
@@ -95,8 +91,7 @@ export class TodoApp extends Component {
         <TodoList
           todos={displayTodos}
           handleSaveTodo={this.saveTodo}
-          handleRemoveTodo={this.removeTodo}
-          toggleEditMode={this.toggleTodoEdit}/>
+          handleRemoveTodo={this.removeTodo} />
       </div>
     )
   }

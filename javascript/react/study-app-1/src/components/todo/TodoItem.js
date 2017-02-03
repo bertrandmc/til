@@ -18,20 +18,9 @@ export class TodoItem extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    this.setState((prevState, props) => {
-      /**
-        * if edit mode was disabled we must delay removing the edit action buttons to allow
-        * element to animate close
-        **/
-      const holdEditingTools = prevState.todo.isEditing && !nextProps.todo.isEditing;
-      setTimeout(() => {
-        this.setState((prevState) => ({
-          holdEditingTools: nextProps.todo.isEditing
-        }));
-      }, 300);
-
-      return {todo: nextProps.todo, holdEditingTools: holdEditingTools};
-    });
+    this.setState((prevState, props) => ({
+      todo: nextProps.todo
+    }));
   }
 
   handleSave = (propName, value) => {
@@ -57,21 +46,44 @@ export class TodoItem extends Component {
     this.setState({removeActive: removeActiveTimeoutId});
   }
 
+  toggleEditMode = () => {
+    this.setState((prevState, props) => {
+
+      /**
+        * if edit mode is being turned off we must delay
+        * removing the edit action buttons to allow todo element to animate close
+        **/
+
+      if(prevState.isEditing) {
+        setTimeout(() => {
+          this.setState((prevState) => ({
+            holdEditingTools: prevState.isEditing
+          }));
+        }, 1000);
+      }
+
+      return {
+        isEditing: !prevState.isEditing,
+        holdEditingTools: prevState.isEditing
+      };
+    });
+  }
+
   render() {
-    const { todo, removeActive, holdEditingTools } = this.state;
-    const { toggleEditMode } = this.props;
+    const { todo, removeActive, holdEditingTools, isEditing } = this.state;
+    console.log(isEditing);
 
     return (
-      <li className={classNames('todo-item', {'todo-item__complete': todo.isComplete, 'todo-item__editing': todo.isEditing})}
-          onClick={() => toggleEditMode(todo)}>
+      <li className={classNames('todo-item', {'todo-item__complete': todo.isComplete, 'todo-item__editing': isEditing})}
+          onClick={this.toggleEditMode}>
 
         <StatusButton
           status={todo.isComplete}
           handleToggle={status => this.handleSave('isComplete', status)}
         />
 
-      {!todo.isEditing && <div className="todo-item-label">{todo.title}</div>}
-        { todo.isEditing &&
+      {!isEditing && <div className="todo-item-label">{todo.title}</div>}
+        { isEditing &&
           <input type="text"
               autoFocus={!todo.title}
               className="todo-item-label-input"
@@ -79,7 +91,7 @@ export class TodoItem extends Component {
               onChange={event => this.handleSave('title', event.target.value)}
               value={todo.title}/>}
 
-      {(todo.isEditing || holdEditingTools)&&
+      {(isEditing || holdEditingTools) &&
         <div className="todo-item-actions">
           <div onClick={this.handleRemove}
               className={classNames("todo-item-action-button", {"todo-item-action-button__active": removeActive})} >
@@ -96,6 +108,5 @@ export class TodoItem extends Component {
 TodoItem.propTypes = {
   todo: React.PropTypes.object.isRequired,
   handleSaveTodo: React.PropTypes.func.isRequired,
-  toggleEditMode: React.PropTypes.func.isRequired,
   handleRemoveTodo: React.PropTypes.func.isRequired,
 };
