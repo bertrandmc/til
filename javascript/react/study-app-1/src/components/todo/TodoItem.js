@@ -10,10 +10,10 @@ export class TodoItem extends Component {
   constructor(props) {
     super(props);
 
-
-    const newState = {todo: props.todo};
-    if(!props.todo.title) newState.isEditing = true;
-    this.state = newState;
+    this.state = {
+      todo: props.todo,
+      isEditing: !props.todo.title ? true : false
+    };
 
     this.debouncedHandleSaveTodo = debounce(props.handleSaveTodo, 300);
   }
@@ -26,9 +26,9 @@ export class TodoItem extends Component {
 
   handleSave = (propName, value) => {
     this.setState((prevState, props) => {
-      const updatedTodod = {...prevState.todo, [propName]: value};
-      this.debouncedHandleSaveTodo(updatedTodod);
-      return {todo: updatedTodod};
+      const updatedTodo = {...prevState.todo, [propName]: value};
+      this.debouncedHandleSaveTodo(updatedTodo);
+      return {todo: updatedTodo};
     });
   }
 
@@ -54,7 +54,6 @@ export class TodoItem extends Component {
         * if edit mode is being turned off we must delay
         * removing the edit action buttons to allow todo element to animate close
         **/
-
       if(prevState.isEditing) {
         setTimeout(() => {
           this.setState((prevState) => ({
@@ -82,7 +81,7 @@ export class TodoItem extends Component {
           handleToggle={status => this.handleSave('isComplete', status)}
         />
 
-      {!isEditing && <div className="todo-item-label">{todo.title}</div>}
+        {!isEditing && <div className="todo-item-label">{todo.title}</div>}
         { isEditing &&
           <input type="text"
               autoFocus={!todo.title}
@@ -92,14 +91,14 @@ export class TodoItem extends Component {
               onChange={event => this.handleSave('title', event.target.value)}
               value={todo.title}/>}
 
-      {(isEditing || holdEditingTools) &&
-        <div className="todo-item-actions">
-          <div onClick={this.handleRemove}
-              className={classNames("todo-item-action-button", {"todo-item-action-button__active": removeActive})} >
-            <IconDelete />
+        {(isEditing || holdEditingTools) &&
+          <div className="todo-item-actions">
+            <div onClick={this.handleRemove}
+                className={classNames("todo-item-action-button", {"todo-item-action-button__active": removeActive})} >
+              <IconDelete />
+            </div>
           </div>
-        </div>
-      }
+        }
       </li>
     )
   }
