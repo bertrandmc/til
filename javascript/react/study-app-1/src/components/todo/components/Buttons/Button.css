@@ -1,0 +1,17 @@
+.todo-action-button {
+  display: inline-block;
+  min-width: 40px;
+  min-height: 35px;
+  margin: 0 5%;
+  font-size: 25px;
+  text-align: center;
+  color: #fff;
+  border: 1px solid;
+  border-color: #fff;
+  transition: all 0.3s linear;
+}
+
+.todo-action-button__active {
+  color: #F2BB16;
+  border-color: #F2BB16;
+}

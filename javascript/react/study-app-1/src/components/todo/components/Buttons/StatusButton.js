@@ -6,9 +6,8 @@ import './StatusButton.css';
 export const StatusButton = (props) => {
 
   const handleStatusToggle = (event) => {
-    event.preventDefault();
     event.stopPropagation();
-    props.handleToggle(!props.status)
+    props.handleToggle(!props.status);
   }
 
   return (

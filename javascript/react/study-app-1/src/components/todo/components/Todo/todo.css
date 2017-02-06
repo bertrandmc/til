@@ -1,0 +1,82 @@
+.todo {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  z-index: 100;
+  background-color: white;
+  transform: translateX(100%);
+  transition: transform .25s linear .05s;
+  background-color: #e9e9e9;
+}
+
+.todo__animate-in {
+  transform: translateX(0%);
+}
+
+.todo-header {
+  height: 40px;
+  width: 100%;
+  border-bottom: 1px solid grey;
+}
+
+.todo-header > * {
+  vertical-align: middle;
+  height: 100%;
+}
+
+.todo-header-back-button {
+  display: inline-block;
+  width: 15%;
+  line-height: 40px;
+  font-size: 1.5em;
+  color: grey;
+  background-color: white;
+}
+
+.todo-header-title-input {
+  display: inline-block;
+  width: 85%;
+  padding: 0;
+  border: 0;
+  font-size: .9em;
+  padding-top: 2px;
+  color: #263248;
+  outline: none;
+}
+
+.todo-actions {
+  position: absolute;
+  display: flex;
+  justify-content: stretch;
+  bottom: 0;
+  height: 40px;
+  width: 100%;
+  background-color: #263248;
+  border-top: 1px solid white;
+
+}
+
+.todo-action-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
+  font-size: 1.5em;
+  color: white;
+  border-left: 1px solid white;
+}
+
+.todo-action-button__active {
+  color: #F2BB16;
+  transition: color .3s linear;
+}
+
+.todo-action-button:first-of-type {
+  border-left: none;
+}
+
+
+.todo-action-button > * {
+  vertical-align: middle;
+}

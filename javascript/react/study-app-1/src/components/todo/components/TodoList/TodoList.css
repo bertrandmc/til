@@ -1,0 +1,83 @@
+.todo-list {
+  position: absolute;
+  top: 40px;
+  bottom: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.todo-list ul {
+  position: absolute;
+  top: 40px;
+  bottom: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+}
+
+.todo-list-item {
+  position: relative;
+  overflow: hidden;
+  min-height: 40px;
+  max-height: 40px;
+  font-size: .9em;
+  padding: 0 2% 10px 0;
+  list-style-type: none;
+  border-bottom: 1px solid #fff;
+  transition: all .2s linear;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.todo-list-item .status-button {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 40px;
+  width: 15%;
+  padding-right: 15px;
+  padding-left: 5px;
+  vertical-align: middle;
+}
+
+.todo-list-item-label,
+.todo-list-item .status-button {
+  display: inline-block;
+  vertical-align:middle;
+}
+
+.todo-list-item-label {
+  width: 85%;
+  margin-left: 15%;
+  text-align: left;
+  line-height: 40px;
+  height: 40px;
+  color: #263248;
+  transition: opacity 0.3s linear;
+  border-bottom: 1px solid rgba(192,192,192,0.5);
+}
+
+.todo-list-item__complete .todo-list-item-label{
+  text-decoration: line-through;
+  opacity: .3;
+}
+
+
+/* TodoListFilter */
+.todo-list-filter {
+  height: 40px;
+  font-size: 14px;
+  padding-top: 13px;
+  border-bottom: 1px solid #fff;
+}
+
+.todo-list-filter a {
+  margin: 0 5px;
+  color: #72A64E;
+  text-decoration: none;
+}
+
+.todo-list-filter a.active {
+  text-decoration: underline;
+}

@@ -1,14 +1,14 @@
 import React, {Component} from 'react';
+import classNames from 'classnames';
 import update from 'react-addons-update';
+import find from 'lodash/find';
 import shortid from 'shortid';
 
 import AddIcon from 'react-icons/lib/md/add-circle-outline';
 
 import './TodoApp.css';
 
-import { TodoList } from './TodoList';
-import { TodoFilter } from './TodoFilter';
-
+import { TodoList, Todo } from './components';
 
 export class TodoApp extends Component {
   static contextTypes = {
@@ -43,11 +43,13 @@ export class TodoApp extends Component {
     this.setState((prevState, props) => ({
       todos: [newTodo, ...prevState.todos]
     }));
+    this.selectTodo(newTodo);
   }
 
   saveTodo = (updatedTodo) => {
     const { todos } = this.state;
     const updatedIndex = todos.findIndex(todo => todo.id === updatedTodo.id);
+
     this.setState({
       todos: update(todos, {[updatedIndex]: {$merge: updatedTodo}})
     });
@@ -56,26 +58,28 @@ export class TodoApp extends Component {
   removeTodo = (removedTodo) => {
     const { todos } = this.state;
     const updatedTodos = todos.filter(todo => todo.id !== removedTodo.id);
-    this.setState({todos: updatedTodos});
+    this.setState({todos: updatedTodos, selectedTodo: false});
   }
 
-  filterTodos(todos, route) {
-    switch(route) {
-      case '/active':
-        return todos.filter(todo => !todo.isComplete);
-      case '/complete':
-        return todos.filter(todo => todo.isComplete);
-      default:
-        return todos;
+  selectTodo = (selectedTodo) => {
+    this.setState({selectedTodo});
+  }
+
+  getSelectedTodo = () => {
+    const {todos, selectedTodo} = this.state;
+
+    if(selectedTodo) {
+      return find(todos, {id: selectedTodo.id});
     }
+
+    return false;
   }
 
   render() {
     const {
-      todos
+      todos,
+      selectedTodo
     } = this.state;
-
-    const displayTodos = this.filterTodos(todos, this.context.route);
 
     return (
       <div className="todo-app">
@@ -85,13 +89,22 @@ export class TodoApp extends Component {
                 <AddIcon />
               </div>
           </div>
-          <TodoFilter />
         </header>
 
         <TodoList
-          todos={displayTodos}
+          todos={todos}
           handleSaveTodo={this.saveTodo}
-          handleRemoveTodo={this.removeTodo} />
+          handleSelectTodo={this.selectTodo}
+          />
+
+        <Todo
+          todo={this.getSelectedTodo(selectedTodo)}
+          className={classNames({"todo__animate-in": selectedTodo})}
+          handleSaveTodo={this.saveTodo}
+          handleBackButton={event => this.selectTodo(false)}
+          handleRemoveTodo={this.removeTodo}
+            />
+
       </div>
     )
   }
