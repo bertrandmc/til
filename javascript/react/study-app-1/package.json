@@ -12,6 +12,7 @@
     "react-icons": "^2.2.3",
     "react-scripts": "0.8.5",
     "react-test-renderer": "^15.4.2",
+    "react-textarea-autosize": "^4.0.5",
     "shortid": "^2.2.6"
   },
   "dependencies": {
