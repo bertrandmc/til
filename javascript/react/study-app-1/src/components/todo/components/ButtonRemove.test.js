@@ -4,7 +4,7 @@ import renderer from 'react-test-renderer';
 import { shallow, render, mount } from 'enzyme';
 import TestUtils from 'react-addons-test-utils';
 
-import {RemoveButton} from './RemoveButton';
+import {ButtonRemove} from './ButtonRemove';
 
 describe('TodoItem', () => {
 
@@ -27,23 +27,23 @@ describe('TodoItem', () => {
 
   it('renders without crashing', () => {
     const div = document.createElement('div');
-    ReactDOM.render(<RemoveButton {...mockedProps} />, div);
+    ReactDOM.render(<ButtonRemove {...mockedProps} />, div);
   });
 
   it('should invoke event.stopPropagation when handleRemove', () => {
-    const component = TestUtils.renderIntoDocument(<RemoveButton {...mockedProps} />);
+    const component = TestUtils.renderIntoDocument(<ButtonRemove {...mockedProps} />);
     component.handleRemove(mockedEvent)
     expect(mockedEvent.stopPropagation).toHaveBeenCalled();
   });
 
   it('should set isActive with timer id number when handleRemove', () => {
-    const component = TestUtils.renderIntoDocument(<RemoveButton {...mockedProps} />);
+    const component = TestUtils.renderIntoDocument(<ButtonRemove {...mockedProps} />);
     component.handleRemove(mockedEvent)
     expect(component.state.isActive).toBeGreaterThan(0);
   });
 
   it('should unset isActive after 300ms handleRemove', () => {
-    const component = TestUtils.renderIntoDocument(<RemoveButton {...mockedProps} />);
+    const component = TestUtils.renderIntoDocument(<ButtonRemove {...mockedProps} />);
 
     component.handleRemove(mockedEvent)
     expect(component.state.isActive).toBeGreaterThan(0);
@@ -53,7 +53,7 @@ describe('TodoItem', () => {
   });
 
   it('should invoke handleRemoveTodo when isActive is set and handleRemove in invoked for second time', () => {
-    const component = TestUtils.renderIntoDocument(<RemoveButton {...mockedProps} />);
+    const component = TestUtils.renderIntoDocument(<ButtonRemove {...mockedProps} />);
 
     component.handleRemove(mockedEvent)
     expect(component.state.isActive).toBeGreaterThan(0);

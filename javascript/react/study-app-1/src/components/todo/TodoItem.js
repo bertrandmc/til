@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import classNames from 'classnames';
 import debounce from 'lodash/debounce';
 
-import {StatusButton, RemoveButton} from './components';
+import {StatusButton, ButtonRemove} from './components';
 
 export class TodoItem extends Component {
 
@@ -77,7 +77,7 @@ export class TodoItem extends Component {
 
         {(isEditing || holdEditingTools) &&
           <div className="todo-item-actions">
-            <RemoveButton  handleRemoveTodo={this.props.handleRemoveTodo} todo={todo} />
+            <ButtonRemove  handleRemoveTodo={this.props.handleRemoveTodo} todo={todo} />
           </div>
         }
       </li>

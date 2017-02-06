@@ -1,9 +1,9 @@
 import React, {Component} from 'react';
-import classNames from 'classnames';
 
+import Button from './Button';
 import IconDelete from 'react-icons/lib/md/delete';
 
-export class RemoveButton extends Component {
+export class ButtonRemove extends Component {
   state = {}
 
   handleRemove = (event) => {
@@ -25,15 +25,14 @@ export class RemoveButton extends Component {
 
   render() {
     return (
-      <div onClick={this.handleRemove}
-          className={classNames("todo-item-action-button", {"todo-item-action-button__active": this.state.isActive})} >
+      <Button handleClick={this.handleRemove} isActive={!!this.state.isActive}>
         <IconDelete />
-      </div>
+      </Button>
     )
   }
 }
 
-RemoveButton.propTypes = {
+ButtonRemove.propTypes = {
   todo: React.PropTypes.object.isRequired,
   handleRemoveTodo: React.PropTypes.func.isRequired
 };
