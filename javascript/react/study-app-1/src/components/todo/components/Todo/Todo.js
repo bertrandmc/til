@@ -93,7 +93,7 @@ export class Todo extends Component {
                 onChange={event => this.handleInputChange('title', event)} />
             </div>
 
-            <div className="todo-prop" onClick={this.toggleDatePicker}>
+            <div className="todo-prop todo-prop-due-date" onClick={this.toggleDatePicker}>
               <IconCalendar className="todo-prop-icon" />
               <div>{this.getFriendlyDate(todo.dueDate)}</div>
             </div>
