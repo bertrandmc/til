@@ -17,6 +17,8 @@ describe('Todo', () => {
       todo: {id: 123, title: 'Test', isComplete: false},
       handleSaveTodo: jest.fn(),
       handleSelectTodo: jest.fn(),
+      handleBackButton: jest.fn(),
+      handleRemoveTodo: jest.fn()
     }
 
     mockedEvent = {

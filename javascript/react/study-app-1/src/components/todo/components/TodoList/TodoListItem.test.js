@@ -42,12 +42,13 @@ describe('TodoListItem', () => {
 
   it('should invoke event.stopPropagation and props.handleSelectTodo when element is clicked', () => {
     const component = shallow(<TodoListItem {...mockedProps} />);
-
-    component.find('li').simulate('click', mockedEvent);
+    component.find('.todo-list-item').simulate('click', mockedEvent);
 
     expect(mockedEvent.stopPropagation).toHaveBeenCalled();
     expect(mockedProps.handleSelectTodo).toHaveBeenCalledWith(mockedProps.todo);
   });
+
+  return;
 
   it('should invoke component.toggleStatus status button is clicked', () => {
     const component = mount(<TodoListItem {...mockedProps} />);

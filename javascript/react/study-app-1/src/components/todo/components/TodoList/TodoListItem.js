@@ -3,6 +3,7 @@ import classNames from 'classnames';
 
 import {StatusButton} from '../';
 
+
 export class TodoListItem extends Component {
   toggleStatus = () => {
     const {todo} = this.props;
@@ -19,7 +20,7 @@ export class TodoListItem extends Component {
     const { todo } = this.props;
 
     return (
-      <li className={classNames('todo-list-item', {'todo-list-item__complete': todo.isComplete})}
+      <div className={classNames('todo-list-item', {'todo-list-item__complete': todo.isComplete})}
           onClick={this.handleClick}>
 
         <StatusButton
@@ -28,7 +29,7 @@ export class TodoListItem extends Component {
 
         <div className="todo-list-item-label">{todo.title}</div>
 
-      </li>
+      </div>
     )
   }
 }

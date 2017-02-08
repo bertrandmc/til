@@ -7,22 +7,23 @@ import TestUtils from 'react-addons-test-utils';
 import {TodoList} from './TodoList';
 
 describe('TodoList', () => {
-  let props;
+  let mockedProps;
 
   beforeEach(() => {
-    props = {
+    mockedProps = {
       todos: [
         {id: 1, name: "Learn", isComplete: false},
         {id: 2, name: "Build App", isComplete: true},
         {id: 3, name: "Ship it!", isComplete: false}
       ],
       handleSaveTodo: jest.fn(),
-      handleSelectTodo: jest.fn()
+      handleSelectTodo: jest.fn(),
+      handleListSort: jest.fn(),
     };
   })
 
   it('should filter and return complete todos', () => {
-    const component = TestUtils.renderIntoDocument(<TodoList  {...props}/>);
+    const component = TestUtils.renderIntoDocument(<TodoList  {...mockedProps}/>);
     const todos = [
       {id: 1, name: "Learn", isComplete: false},
       {id: 2, name: "Build App", isComplete: true},
@@ -36,7 +37,7 @@ describe('TodoList', () => {
   });
 
   it('should filter and return non-complete todos', () => {
-    const component = TestUtils.renderIntoDocument(<TodoList {...props}/>);
+    const component = TestUtils.renderIntoDocument(<TodoList {...mockedProps}/>);
     const todos = [
       {id: 1, name: "Learn", isComplete: false},
       {id: 2, name: "Build App", isComplete: true},
@@ -51,7 +52,7 @@ describe('TodoList', () => {
   });
 
   it('should filter and return all todos', () => {
-    const component = TestUtils.renderIntoDocument(<TodoList {...props}/>);
+    const component = TestUtils.renderIntoDocument(<TodoList {...mockedProps}/>);
     const todos = [
       {id: 1, name: "Learn", isComplete: false},
       {id: 2, name: "Build App", isComplete: true},
@@ -59,5 +60,16 @@ describe('TodoList', () => {
     ];
 
     expect(component.filterTodos(todos, 'all')).toEqual(todos);
+  });
+
+  it('should invoke props.handleListSort when handleListSort', () => {
+    const component = TestUtils.renderIntoDocument(<TodoList {...mockedProps}/>);
+    const items = mockedProps.todos.map(todo => ({
+      props: { todo: todo}
+    }));
+
+    component.handleListSort(items);
+
+    expect(mockedProps.handleListSort).toHaveBeenCalledWith(mockedProps.todos);
   });
 });

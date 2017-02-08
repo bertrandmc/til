@@ -75,6 +75,10 @@ export class TodoApp extends Component {
     return false;
   }
 
+  handleListSort = (todos) => {
+    this.setState({todos});
+  }
+
   render() {
     const {
       todos,
@@ -95,6 +99,7 @@ export class TodoApp extends Component {
           todos={todos}
           handleSaveTodo={this.saveTodo}
           handleSelectTodo={this.selectTodo}
+          handleListSort={this.handleListSort}
           />
 
         <Todo

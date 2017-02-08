@@ -30,6 +30,18 @@
   will-change: transform;
 }
 
+.todo-list-item::after {
+  content: '\2225';
+  color: #cccccc;
+  position: absolute;
+  right: 5px;
+  top: 19%;
+  height: 50%;
+  vertical-align: middle;
+  font-size: 1.5em;
+  font-weight: normal;
+}
+
 .todo-list-item .status-button {
   position: absolute;
   top: 0;
