@@ -60,6 +60,8 @@ export class Todo extends Component {
   toggleDatePicker = () => {
     this.setState((prevState) => ({
       showDatePicker: !prevState.showDatePicker,
+      // When todo loads datePicker is not activated for better slide animation
+      // when user clicks calendar for first time then it is activated and kept like that
       activateDatePicker: true
     }));
   }
