@@ -45,6 +45,47 @@
   outline: none;
 }
 
+
+.todo-prop {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  font-size: .9em;
+  text-align: left;
+  color: #7E8AA2;
+  padding: 10px 5px;
+  border-bottom: 1px solid #7E8AA2;
+}
+
+.todo-prop-icon {
+  font-size: 1.3em;
+  margin-right: 5px;
+}
+
+.todo-prop > :first-child {
+  width: 20px;
+}
+
+.todo-prop > :nth-child(2) {
+  flex-grow: 1;
+  font-size: .8em;
+}
+
+.todo-prop-comment {
+  align-items: flex-start;
+}
+
+.todo-prop-comment textarea {
+  width: 100%;
+  border: none;
+  resize: none;
+  background-color: transparent;
+  outline: none;
+  color: #7E8AA2;
+  padding-left: 0;
+}
+
 .todo-actions {
   position: absolute;
   display: flex;
@@ -75,7 +116,6 @@
 .todo-action-button:first-of-type {
   border-left: none;
 }
-
 
 .todo-action-button > * {
   vertical-align: middle;
