@@ -1,6 +1,23 @@
+@font-face {
+  font-family: 'Droid Sans';
+  src: url('/fonts/droid_sans/droidsans-webfont.woff2') format('woff2'),
+       url('/fonts/droid_sans/droidsans-webfont.woff') format('woff'),
+       url('/fonts/droid_sans/droidsans.ttf')  format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+    font-family: 'Droid Sans';
+    src: url('/fonts/droid_sans/droidsans-bold-webfont.woff2') format('woff2'),
+         url('/fonts/droid_sans/droidsans-bold-webfont.woff') format('woff'),
+         url('/fonts/droid_sans/droidsans-bold.ttf')  format('truetype');
+    font-weight: bold;
+}
+
 * {
   box-sizing: border-box;
-  font-family: sans-serif;
+  font-family: 'Droid Sans', sans-serif;
 }
 
 .app {
