@@ -60,34 +60,60 @@ When its not a tail call?
 So lets analyze the code bellow:
 
 ```
-function f(n) {
-  if (n === 0) {
+function factorial(n) {
+  if (n === 1) {
     return 1;
   }
 
-  const nextValue = f(n - 1);
-  return n * nextValue;
+  return n * factorial(n - 1);
 }
 ```
 
-Is the result of `const nextValue = factorial(n-1);` a tail call?
-It is not because the function have more work to do after the nextValue is computed, so the compiler cannot optimize it. Lets re-write out factorial to allow for tail call optimization:
+Is the result of `return n * factorial(n - 1);` a tail call?
+It is not because to be able to calculate the final result, the factorial(n) call has to wait for the result of `factorial(n - 1)`, which nested in the expression `n * factorial(n - 1)`, so in this case the compiler cannot optimize it and instead it needs to keep a chain of deferred operations, this is know as **recursive process**.
+
+One important thing is not to confuse **recursive process** with **recursive procedure**. A recursive procedure is basically a function that calls itself, while a recursive process is an explanation of how the process evolves, so a recursive process builds up a chain of deferred operations.
+
+factorial(5)
+(5 * factorial(4))
+(5 * 4 * factorial(3))
+(5 * 4 * 3 * factorial(2))
+(5 * 4 * 3 * 2 * factorial(1))
+(5 * 4 * 3 * 2 * 1)
+(5 * 4 * 3 * 2 * 1)
+(5 * 4 * 3 * 2)
+(5 * 4 * 6)
+(5 * 24)
+120
+
+Now lets re-write our factorial to allow for Tail Call Optimization:
 
 ```
-function f(n, acc = 1) {
-  if (n === 0) {
-    return acc;
+function factorial(n, product = 1, counter = 1) {
+  if(counter > n) {
+    return product;
   }
 
-  return f(n - 1, n * acc);
+  return factorial(n, (counter * product), (counter + 1))
 }
 ```
 
-And with the above, if we want to know the factorial of 4, a non-optimized stack would look like this:
+In the case above there is no need to keep reference of the previous calls, there are no deferred operations because the result of previous calculations are passed along to the next function call, the compiler is then able to keep only the last function call and its parameter, which is enough to reach our result. This process is known as **iteractive process**.
 
-  f(4) -> f(3, 4) -> f(2, 12) -> f(1, 24) -> f(0, 24)
+  > "In the iterative case, the program variables provide a complete description of the state of the process at any point. - SICP"
 
-The optimized version looks like this:
-  f(0, 24)
+Like we did before, lets use the substitution model to see how this calculation evolves:
+
+factorial(5, 1, 1) // 1, 1 are default values
+factorial(5, 1, 2)
+factorial(5, 2, 3)
+factorial(5, 6, 4)
+factorial(5, 24, 5)
+factorial(5, 120, 6)
+120
+
+We can see that the compiler won't need to keep a reference of the previous calls/parameters to be able to calculate `factorial(5, 120, 6)` because the call provides everything needed that is needed and this allows for TCO.
+
+Now think of a very large factorial calculation, TCO is a huge benefit. (see SICP page 34)
 
 Check this [link](https://kangax.github.io/compat-table/es6/) to see browser compatibility with TCO.
