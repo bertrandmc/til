@@ -1,0 +1,17 @@
+.todo-form {
+  padding: 10px;
+  background-color: #3D8799;
+  display: flex;
+
+  input {
+    font-size: 1.2em;
+    flex-grow: 2;
+  }
+
+  button {
+    font-size: 1.3em;
+    background-color: #A65371;
+    border: none;
+    color: white;
+  }
+}

@@ -1,0 +1,16 @@
+.todo-filter {
+  padding: 10px;
+  color: white;
+  background-color: #3D8799;
+
+  > div {
+    display: inline-block;
+    margin-right: .5em;
+    cursor: pointer;
+  }
+
+  &__active {
+    color: #00FFA6;
+    text-decoration: underline;
+  }
+}

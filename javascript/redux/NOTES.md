@@ -22,6 +22,41 @@ The 3 most important methods available in the store:
     Allows you to register a callback that will be invoked anytime an action was dispached and some
     part of the state may have changed.
 
+### Create Store Basic Implementation
+A minimal reimplementation of redux createStore:
+
+```javascript
+const createStore = (reducer) => {
+  let state;
+  let listeners = [];
+
+  const getState = () => state;
+
+  const dispatch = (action) => {
+    state = reducer(state, action);
+
+    // notify all subscribers
+    listeners.forEach(listener => listener());
+  };
+
+  const subscribe = (listener) => {
+    listeners.push(listener);
+
+    // return unsubscribe function
+    return () => listeners.filter(l => l !== listener);
+  };
+
+  // Immediately dispatch an empty action so initial state is set by reducers
+  dispatch({});
+
+  return {getState, dispatch, subscribe};
+};
+
+
+export default createStore;
+
+```
+
 
 ### Combine reducers
 Redux combineReducers method expects an object with the following structure:
@@ -54,6 +89,7 @@ The state will be:
 **Combine reducers is a pure function and won't mutate the state.**
 
 A basic implementation of combineReducers would look like this:
+
 ```javascript
 const combineReducers = (reducers) => {
   return (state = {}, action) => {
@@ -64,3 +100,36 @@ const combineReducers = (reducers) => {
   }
 }
 ```
+
+
+#### Passing Properties Down Implicitly via Content
+
+Bellow is a basic implementation of Provider component from react-redux:
+
+```javascript
+class Provider extends Component {
+  static childContextTypes = {
+    store: React.PropTypes.object
+  }
+
+  getChildContext() {
+    return {
+      store: this.props.store
+    }
+  }
+
+  render () {
+    return this.props.children;
+  }
+}
+```
+
+The Provider component will use React's advance context feature to make the store available to any component inside it. For that we need to define the method `getChildContext()` that will be called by React. For `getChildContext` to work we must also specify `childContextTypes` on the component that defined `getChildContext`, without `childContextTypes` no child component will receive the context.
+
+RenderMethod: It just returns its children, this way we can wrap any component in the provider.
+
+**IMPORTANT: Context allows us to create global variables that are available across the component tree, but ideally its use should be avoided as it contradicts React's philosophy of explicit data flow**
+
+
+#### React-Redux Connect, mapStateToProps & mapDispatchToProps
+TODO

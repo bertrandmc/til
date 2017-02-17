@@ -1,0 +1,19 @@
+.todo-list {
+  border: 1px solid #3D8799;
+}
+
+.todo-list-item {
+  font-size: 1.2em;
+  padding: 10px;
+  cursor: pointer;
+  color: #3D8799;
+  border-bottom: 1px solid #3D8799;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &.is-complete {
+    text-decoration: line-through;
+  }
+}
