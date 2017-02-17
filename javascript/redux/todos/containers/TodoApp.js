@@ -60,11 +60,20 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch, ownProps) => {
   const {todos, filter} = ownProps.actions;
+  
   return {
-    addTodo: (newTodo) => dispatch(todos.addTodo(newTodo)),
-    toggleTodo: (todo) => dispatch(todos.toggleTodo(todo)),
-    toggleTodo: (todo) => dispatch(todos.toggleTodo(todo)),
-    setFilter: (newFilter) => dispatch(filter.setFilter(newFilter)),
+    addTodo (newTodo) {
+      dispatch(todos.addTodo(newTodo))
+    },
+    toggleTodo(todo) {
+      dispatch(todos.toggleTodo(todo))
+    },
+    toggleTodo (todo) {
+      dispatch(todos.toggleTodo(todo))
+    },
+    setFilter (newFilter) {
+      dispatch(filter.setFilter(newFilter))
+    },
   }
 }
 
