@@ -94,8 +94,112 @@ In 3D computer graphics, we usually use a Cartesian Coordinate System. In this s
 
 <img src="images/cartesian-coordinates.png" width="200"/>
 
-The `origin` is some fixed point in space whose location everyone agrees on
+The `origin` is some fixed point in space whose location everyone agrees on.
 
+The `x`, `y` and `z` direction vectors define the axis of the coordinate system, they are normally each perpendicular to the other, that means, the angle to each other are all 90 degrees (see red lines in the center of image bellow).
+
+So given an origin and 3 vectors we can define the location of any point in space with a **triplative** numbers. For example the point at the top has a triplative number of **(x,y,z) === (2,3,4)**
+
+3D vectors are described by a similar coordinate system, except that the origin is not needed. A vector describes a motion, which again can be described by three numbers. That is, it describes how far to move to get from one point to another, however, this movement is not fixed in any particular location in space. To make an analogy think about time, a specific time is like a point while an amount of time is like a vector, it specifies the duration but no starting time is given.
+
+<img src="images/cartesian-coordinates-example.png" width="300"/>
+
+
+### Left-Handed vs Right-Handed
+
+Indicates if in the coordinates the z value is going to be positive or negative, in the left-handed z index is positive when away from viewer while in right-handed z-index is positive towards the viewer.
+
+<img src="images/righ-left-handed-systems.jpg" width="300"/>
+
+
+
+### Points and Lines
+There are only three primitives we ever send to the graphics processing unit, `points`, `line segments` and `triangles`. Of these, triangles are by far the most important. For example, just about everything you see in a 3D game is ultimately made of triangles.
+
+**Defining a point (x,y,z)**
+
+<img src="images/defining-a-point.png" width="300"/>  
+
+
+**Defining a line segment (x,y,z) (x,y,z)**
+
+By defining a second point you can define a line segment.
+
+<img src="images/defining-a-line-segment.png" width="300"/>  
+
+
+**Defining a triangle (x,y,z) (x,y,z) (x,y,z)**
+
+A triangle is created by defining three points
+
+<img src="images/define-a-triangle.png" width="300"/>  
+
+
+
+### ThreeJS
+
+
+**Vertices** are the corners of a polygon, we use `Vector3` for both **points** and **vectors** within THREEJS
+```
+const triangle = new THREE.Geometry();
+triangle.vertices.push( new THREE.Vector3(1,1,0) );
+triangle.vertices.push( new THREE.Vector3(3,1,0) );
+triangle.vertices.push( new THREE.Vector3(3,3,0) );
+
+triangle.faces.push( new THREE.Face3(0,1,2) );  
+// 0,1,2 corresponds to the index of the trinalge.vertices array
+// [(1,1,0), (3,1,0), (3,3,0)]
+
+
+const triangleMaterial = new THREE.MeshBasicMaterial({
+    color: 0x2686AA,
+    side: THREE.DoubleSide
+});
+
+const triangleMesh = new THREE.Mesh(triangle, triangleMaterial);
+
+scene.add(triangleMesh);
+
+var square = new THREE.Geometry();
+square.vertices.push( new THREE.Vector3( x1, y1, 0 ) ); square.vertices.push( new THREE.Vector3( x2, y1, 0 ) ); square.vertices.push( new THREE.Vector3( x2, y2, 0 ) ); square.vertices.push( new THREE.Vector3( x1, y2, 0 ) ); square.faces.push( new THREE.Face3( 0, 1, 2 ) );
+square.faces.push( new THREE.Face3( 2, 0, 3 ) ); return square;
+
+```
+
+
+### Vertex Ordering and Culling
+Back-face culling determines whether a polygon of a graphical object is visible. It is a step in the graphical pipeline that tests whether the points in the polygon appear in clockwise or counter-clockwise order when projected onto the screen. If the user has specified that front-facing polygons have a clockwise winding, but the polygon projected on the screen has a counter-clockwise winding then it has been rotated to face away from the camera and will not be drawn.
+
+The process makes rendering objects quicker and more efficient by reducing the number of polygons for the program to draw.
+
+<img src="images/backface-culling.png" width="300"/>
+
+In ThreeJS, so turn backface-culling on use the `side` property in the material.
+
+```
+var material = new THREE.MeshBasicMaterial({
+    color: 0xF6831E,
+    side: THREE.FrontSide
+});
+```
+
+To determine if a triangle is a frontface or a backface:
+There are three points defining each triangle, the order of the vertices after they are projected on the screen tells us that. In WebGL the order is counterclockwise for front-facing and  clockwise for backface (use the right-hand wrapping technic).
+
+So bellow we have a square made of two triangles, the first triangle is frontface the second backface.
+
+```
+geometry.vertices.push( new THREE.Vector3( 3, 3, 0 ) ); // bottom left corner
+geometry.vertices.push( new THREE.Vector3( 7, 3, 0 ) ); // bottom right corner
+geometry.vertices.push( new THREE.Vector3( 7, 7, 0 ) ); // top right corner
+geometry.vertices.push( new THREE.Vector3( 3, 7, 0 ) ); // top left corner
+
+// frontface because order of the vertices is counterclockwise
+geometry.faces.push( new THREE.Face3( 0, 1, 2 ) );
+
+// backface because the order of the vertices is clockwise
+geometry.faces.push( new THREE.Face3( 0, 2, 3 ) );
+```
 
 ### Jargons
 
