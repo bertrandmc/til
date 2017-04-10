@@ -25,7 +25,7 @@ Frustum is the region of space in the modeled world that may appear on the scree
 
 The view frustum is typically obtained by taking a frustum—that is a truncation with parallel planes—of the pyramid of vision, which is the adaptation of (idealized) cone of vision that a camera or eye would have to the rectangular viewports typically used in computer graphics.
 
-<img src="images/view-frustum.svg" width="400" onerror="this.onerror=null; this.src='image.png'">
+<img src="images/view-frustum.png" width="400">
 
 
 ### Scene
