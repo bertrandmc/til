@@ -411,6 +411,89 @@ Other solutions are:
     **Stochastic-Transparency**: Uses Screen-Door transparency within the pixel itself, along with some randomness to get it a reasonable average result.
 
 
+## Transforms
+
+Transform here is a mathematical therm meaning an operation that changes the position, orientation, or size and shape of an object. Transforms are a key part of computer graphics.
+
+The study of of transforms for computer graphics is associated with the field of linear algebra, a field concerned with vector spaces.
+
+#### Point and Vector operations
+A point is a position and a vector describes a motion. We can combine both in various useful ways by adding or subtracting their coordinates from one another. To start with, if you subtract the location of point A from point B, you get a Vector describing how to get from point A to point B.
+<img src="images/point-vector-operations-1.png" width="400px"/>
+
+We can also add vectors together.
+<img src="images/point-vector-operations-2.png" width="400px"/>
+
+The other thing commonly done with vectors and points it to multiply them by a scalar number to describe moving in a given direction, multiplying by a positive number indicates moving further, if you multiply by negative value you reverse the vector direction.
+
+Multiply a point by a number is a way to make an object larger or smaller. This type of operation is called scaling.
+
+
+#### Translations
+Translations is just a way to say "move something into a new position". ThreeJS has translation and other transforms built into every object. Bellow you can see how translation is applied to a sphere object, in the second example we see that the y coordinate is the sum of values, the coordinates can actually be the sum of product of any se of values, adding values together like this is equivalent as adding the coordinates of vectors. So say bellow vector of (0,160,0) was added to a vector of (0,390,0).
+
+Translations can be treated somewhat like numbers in this respect. You can add them together in any order and you'll obtain a final translation vector that sums all the translations and tell you the final position.
+<img src="images/point-vector-operations-3.png" width="400px"/>
+
+#### Rotaion
+ThreeJS also has built in support for object rotations. The object rotates around its center in a counter clock wise fashion. The angle is specified in radians which computer likes, humans prefer degrees. So bellow we are specifying 70 degrees and converting it to radians by multiplying by PI/180.
+
+<img src="images/point-vector-operations-4.png" width="400px"/>
+
+
+#### Euler Angles
+The Euler angles are three angles introduced by Leonhard Euler to describe the orientation of a rigid body with respect to a fixed coordinate system. They can also represent the orientation of a mobile frame of reference in physics or the orientation of a general basis in 3-dimensional linear algebra.
+
+Any orientation can be achieved by composing three elemental rotations, i.e. rotations about the axes of a coordinate system. Euler angles can be defined by three of these rotations. They can also be defined by elemental geometry and the geometrical definition demonstrates that three rotations are always sufficient to reach any frame.
+
+<img src="images/euler-angles.gif" width="400px"/>
+
+The three elemental rotations may be extrinsic (rotations about the axes xyz of the original coordinate system, which is assumed to remain motionless), or intrinsic (rotations about the axes of the rotating coordinate system XYZ, solidary with the moving body, which changes its orientation after each elemental rotation).
+
+
+#### Rigid Body Transforms vs Scaling
+To scale something is to make it larger or smaller. This operation is somewhat different than translation and rotation. When we translate or rotate an object, we don't change it's shape or it's volume. These two operations are what is called **rigid body transforms**. The name rigid is just what it says. If you have an object and apply any number of rotations and translations to it you wont change it's shape.
+
+Scaling does change an object overall size, so its not a rigid body transform. To scale an object is ThreeJs.
+
+```
+ballon.scale = new THREE.Vector3(3,3,3);
+```
+
+To code above makes the ballon 3 times larger than it was before, the ballon will be 3 times larger in all ways, the thickness of the skin, the part where you seal it off, and so on. Like rotation, scaling is done with respect to an origin. Since the valve of the is at the origin, the valve will stay still and the ballon will expand upwards.
+
+<img src="images/scaling-ballon.png" width="400px"/>
+
+You can scale an object differently along each of the three axes, x, y and z. The code bellow is scaling the object along the y axis, but not the other two. A number less than 1 means you are making the object smaller.
+
+<img src="images/scaling-non-uniform.png" width="400px"/>
+
+When you scale an object the same amount in all directions, this is called uniform scaling. If the scale varies it's called non-uniform. Uniform scaling does not change any angles within the model itself. Non uniform scaling can modify angles. In other words, the shape of the model itself is changed.
+
+#### Order
+When rotations or scales are involved, the order in which they occur matter. ThreeJS uses the following order to apply the transforms on an object. `scale -> rotate -> translate (position)`. It doesn't matter in what order you set the parameters, the above order will always be respected during evaluation. This is the default because it is often the easiest way to produce the results you want. If you have something special in mind you may find it best to transform in a different order. That's possible
+
+
+**IMPORTANT** : I ThreeJs the object transforms and rotates around the origin, which is the scene origin and not the element center. See the image bellow, the green circle is the scene origin, we add an element to the scene (in this case the wood stick) and its center is centered with scene origin, if we first translate the object, moving it some units up, and afterwards we try to rotate, rotation will be based on the scene origin, causing the wood stick to position at the floor. That i why ThreeJs uses the order of transformation `scale -> rotate -> translate (position)`.
+
+<img src="images/rotate-scale-translate-origin.png" width="400px"/>
+
+
+If we want instead to change this order of execution ThreeJs allows us to use an Object3D to wrap any element, see code bellow:
+
+```javascript
+var block = new THREE.Mesh(new THREE.BoxGeometry(100, 4, 4), clockMaterial);
+block.position.x = 40;
+
+var clockHand = new THREE.Object3D();
+clockHand.add(block);
+
+clockHand.rotation.y = -70 * Math.PI / 180;
+scene.add(clockHand);
+```
+
+Above the block is nested inside the clockHand object. The translation moves the block so that on end is over the center of the clock face so that the hand will rotate around the clock properly. So for the hand, the rotation is still relative to the scene origin, as nothing was added to it, while the block was used to move the handle to the correct position.
+
 ### Jargons
 
 Spline: A fancy word for a type of curve. Spline curves are formed by carefully placing a few points, called control points.
