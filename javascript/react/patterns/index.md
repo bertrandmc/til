@@ -54,6 +54,11 @@ A React Node can be either:
   .number (aka ReactText)
   .array of ReactNodes (aka ReactFragment)
 
+```
+type ReactNode = ReactElement | ReactFragment | ReactText;
+type ReactFragment = Array<ReactNode | ReactEmpty>;
+```
+
 They can be used as children property of other ReactDOMElements to create a tree of ReactElements.
 
 
@@ -123,15 +128,31 @@ greetingA === greetingB; // true
 ```
 
 
+### React Types
+
 
 ```javascript
 type ReactNode = ReactElement | ReactFragment | ReactText;
 
 type ReactElement = ReactComponentElement | ReactDOMElement;
 
+type ReactDOMElement = {
+  type : string,
+  props : {
+    children : ReactNodeList,
+    className : string,
+    etc.
+  },
+  key : string | boolean | number | null,
+  ref : string | null
+};
 
-
-
+type ReactComponentElement<TProps> = {
+  type : ReactClass<TProps>,
+  props : TProps,
+  key : string | boolean | number | null,
+  ref : string | null
+};
 
 type ReactFragment = Array<ReactNode | ReactEmpty>;
 
@@ -319,3 +340,14 @@ How Render callback compares to HOC?
 
 •	State hoisting
 •	Controlled input
+
+
+
+
+
+## References
+https://facebook.github.io/react/blog/2014/10/14/introducing-react-elements.html
+https://gist.github.com/sebmarkbage/fcb1b6ab493b0c77d589#react-elements
+https://gcanti.github.io/2014/11/24/understanding-react-and-reimplementing-it-from-scratch-part-2.html
+
+https://facebook.github.io/reason/index.html
