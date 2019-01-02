@@ -1,0 +1,91 @@
+
+/* property selectors */
+[propName="value or regex"] /* without a value or regex it selects all where that property is set. */
+/* sibling selector */
+input.user-name + label /* selects the label element that is sibling (right after) (order is important) of input with class user-name */
+input.user-name ~ label /* selects the label element that is sibling of input with class user-name */
+/* IMPORTANT: Order is important when selecting siblings, we can't select a sibling that comes before
+/* Link */
+
+a
+a:link
+a:[href] /* targets all a links with href property (AKA property selector) */ 
+a:visited
+a:hover
+a:active 
+a:link:hover /* combining */
+a:[href]
+
+/* * always use in this order :link, :visited, :hover, :active */
+
+
+/* forms */
+label
+input
+input:focus
+input:disabled 
+input:enabled
+input:checked
+input:invalid
+input:valid
+input:required
+input:optional
+input::placeholder
+
+
+/* hierarchy pseudo classes */
+/* BEST PRACTICES: These selectors are difficult to maintain, use them sparingly
+/*
+<ul>
+    <li>1</li>
+    <li>2</li>
+    <li>3</li>
+</ul>
+*/
+
+li 
+li:first-child
+li:last-child
+li:nth-child(2) /* second child */
+li:nth-child(2n) /* selects even elements, n counting starts with 0 */
+li:nth-child(2n+1) /* selects odd elements, first third and so on  */
+li:nth-child(-n+4) /* selects the first four elements  */
+li:nth-child(n+4) /* selects everything except the first four elements */
+li:nth-last-child(n+2) /* targets all except last, works the same as nth-child but is counts from the end */
+li:only-child() /* applies to single child element */
+li:only-of-type /* targets specific element type */
+li:last-of-type /* targets last of type */
+li:nth-of-type(an+b) /* matches elements of a given type, based on their position among a group of siblings */
+li:nth-last-of-type(an+b) /* matches elements of a given type, based on their position among a group of siblings, counting from the end */
+
+
+/* pseudo elements */
+
+::before
+::after
+p::first-line /* targets first line of a paragraph */
+p::first-letter /* targets first letter of a paragraph */
+input::placeholder
+
+
+
+/* 
+    selectors specificity 
+
+    If two selectors have the same rules the most specific wins, if both have the same
+    specificity the last declared selector wins. 
+    
+    0. Inline styles
+    1: IDs, Classes attributes, and pseudo-classes, Elements and pseudo elements     
+*/
+
+/*
+
+    General best practices
+
+    Avoid using inline styles to maximize the cascading nature of CSS
+    Avoid being too specific with selectors for better maintainability 
+    Avoid using !important
+
+*/
+
