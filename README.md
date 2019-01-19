@@ -5,29 +5,6 @@
 A collection of code snippets, small programs and concise write-ups on things I learn day to day across a variety of languages and technologies.
 
 ---
-
-### Categories
-
-- [Elm](https://github.com/Bema/til/tree/master/elm)
-
-- [DOM](https://github.com/Bema/til/tree/master/DOM)
-  - [DOM Tree Structure](https://github.com/Bema/til/blob/master/DOM/tree-structure.md)
-  - [Dimension System](https://github.com/Bema/til/blob/master/DOM/document-coordinate-system.md)
-  - [Box Model](https://github.com/Bema/til/blob/master/DOM/box-model.md)
-
-- [Javascript](https://github.com/Bema/til/tree/master/javascript)
-  - [ES6](https://github.com/Bema/til/tree/master/javascript/es6)
-  - [React](https://github.com/Bema/til/tree/master/javascript/react)
-  - [Angular](https://github.com/Bema/til/tree/master/javascript/angular)
-
-- [Git](https://github.com/Bema/til/tree/master/git)
-
-- [Tech Talks](https://github.com/Bema/til/blob/master/talks/NOTES.md)
-
-- Misc
-  - [Browser Rendering Optimization](https://github.com/Bema/til/blob/master/browser-optimization/NOTES.md)
-
----
 ## License
 
 MIT
