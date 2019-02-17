@@ -128,7 +128,22 @@ concat2(result1, result2); // 55
 // Async Flow
 
 
-module.exports = {
+
+// More Monoids
+
+const Pair = (x, y) => ({
+    x,
+    y,
+    concat: ({x: x1, y: y1}) => Pair(x.concat(x1), y.concat(y1)),
+    bimap: (f, g) => Pair(f(x), g(y)),
+    toList: () => [x, y]
+})
+
+module.exports = {  
     Sum,
     All,
+    Pair,
 }
+
+
+

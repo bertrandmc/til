@@ -47,5 +47,6 @@ function getUser() {
 }
 
 
-// Functors Laws are:
-
+module.exports = {
+    Box,
+}

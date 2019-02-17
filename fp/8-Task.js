@@ -1,6 +1,7 @@
 const Task = require('data.task')
 
 // Tasks are LazyBoxes, they only evaluate once fork is invoked.
+// They can reject or resolve
 
 const makeCake = () => (
     new Task((rej, res) => {

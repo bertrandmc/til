@@ -29,7 +29,7 @@ function getUsername() {
     if (user) {
         return user.name
     } else {
-        return 'user not found'
+        return null
     }
 }
 
@@ -38,4 +38,10 @@ function getUsername() {
     fromNullable(getUser())
         .map(user => user.name)
         .fold(err => 'user not found', name => name)
+}
+
+module.exports = {
+    Right,
+    Left,
+    fromNullable,
 }
