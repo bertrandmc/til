@@ -38,11 +38,53 @@ In order to create a Customer Managed Policy, you can copy an existing AWS Manag
 
 Recommended for use cases where the existing AWS Managed Policies don't meet the needs of your environment.
 
+**Policy Structure**
+This is known as the PARC model.
+
+```
+{
+    "Statement": [{
+        "Effect": "Allow | Deny",
+        "Principal": "principal",                                           // P
+        "Action": ["ec2:Describe*", "ec2:action1", "ec2:action2"],          // A
+        "Resource": "arn",                                                  // R
+        "Condition": {                                                      // C
+            "condition": {
+                "key": "value"
+            }
+        }
+    }]
+}
+```
+
+`Effect`: Allow or Deny
+`Principal`: Use the Principal element in a policy to specify the principal that is allowed or denied access to a resource. You cannot use the Principal element in an IAM identity-based policy. You can use it in the trust policies for IAM roles and in resource-based policies.
+`Action`: The Action element describes the specific action or actions that will be allowed or denied. e.g: `"Action": "sqs:SendMessage"`
+`Resource`: The Resource element specifies the object or objects that the statement covers. Statements must include either a Resource or a NotResource element. You specify a resource using an ARN. For more information about the format of ARNs, see IAM ARNs (see ARNs anatomy below).
+`Condition`: The Condition element (or Condition block) lets you specify conditions for when a policy is in effect. e.g: `"Condition" : { "StringEquals" : { "aws:username" : "johndoe" }}`
+Tip on Conditions: You can point to managed policies. e.g:
+
+```
+"Condition": {
+    "StringEquals": {
+        "iam:PermissionsBoundary": "arn:aws:iam:123...:policy/region-restriction"
+    }
+}
+```
+
+**ARNs Anatomy**
+`"Resource": "arn:aws:[service]:[region]:[account]:resourceType/resourcePath"`
+e.g: `"Resource": "arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0"`
+You can specify all instances that belong to a specific account by using the \_ wildcard as follows.
+e.g: `"Resource": "arn:aws:ec2:us-east-1:123456789012:instance/*"`
+WildCards can be used in any position of the ARN path.
+e.g: `"Resource": "arn:aws:ec2:us-east-1:123456789012:*"` or `"Resource": "*"`
+
 **Identities providers**: allows you to manage user identities outside AWS. This is useful if your organization already has its own identity system, such as a corporate user directory. It is also useful if you are creating a mobile app or web application that requires access to AWS resources.When you use an IAM identity provider, you don't have to create custom sign-in code or manage your own user identities. The IdP provides that for you. Your external users sign in through a well-known IdP, such as Login with Amazon, Facebook, or Google. You can give those external identities permissions to use AWS resources in your account. IAM identity providers help keep your AWS account secure because you don't have to distribute or embed long-term security credentials, such as access keys, in your application. IAM Identity Providers is compatible with OpenID and SAML (security assertion markup language).
 
 **STS (Security Token Service)**
 
-AWS Security Token Service (AWS STS) is a web service that enables you to request temporary, limited-privilege credentials for AWS Identity and Access Management (IAM) users or for users that you authenticate (federated users).
+AWS Security Token Service (AWS STS) is a web service that enables you to request temporary, limited-privilege credentials for AWS Identity and Access Management (IAM) users or for users that you authenticate (federated users). Credentials are valid frm 900 seconds (15 minutes) tup to a maximum og 3600 seconds (1 hour). Default is 1 hour.
 
 **AssumeRoleWithWebIdentity**
 AssumeRoleWithWebIdentity is an API provided by STS. It returns temporary security credentials for users authenticated by a mobile or web application or using a Web ID Provider like Amazon, Facebook, Google etc.
@@ -122,6 +164,23 @@ Provides secure, hierarchical storage for configuration data management and secr
 You can create a parameter as:
 String, String List and Secure String (which is encrypted using AWS KMS).
 
+## AWS WAF
+
+AWS WAF is a web application firewall that helps protect your web applications or APIs against common web exploits that may affect availability, compromise security, or consume excessive resources. AWS WAF gives you control over how traffic reaches your applications by enabling you to create security rules that block common attack patterns, such as SQL injection or cross-site scripting, and rules that filter out specific traffic patterns you define. You can get started quickly using Managed Rules for AWS WAF, a pre-configured set of rules managed by AWS or AWS Marketplace Sellers. The Managed Rules for WAF address issues like the OWASP Top 10 security risks. These rules are regularly updated as new issues emerge. AWS WAF includes a full-featured API that you can use to automate the creation, deployment, and maintenance of security rules.
+With AWS WAF, you pay only for what you use. The pricing is based on how many rules you deploy and how many web requests your application receives. There are no upfront commitments.
+You can deploy AWS WAF on Amazon CloudFront as part of your CDN solution, the Application Load Balancer that fronts your web servers or origin servers running on EC2, or Amazon API Gateway for your APIs.
+**Web traffic filtering**
+Filter web traffic based on conditions that include IP addresses, HTTP headers and body, or custom URIs.
+
+## AWS Shield
+
+AWS Shield is a managed Distributed Denial of Service (DDoS) protection service that safeguards applications running on AWS. AWS Shield provides always-on detection and automatic inline mitigations that minimize application downtime and latency, so there is no need to engage AWS Support to benefit from DDoS protection. There are two tiers of AWS Shield - Standard and Advanced.
+
+## Amazon Macie
+
+Amazon Macie is a fully managed data security and data privacy service that uses machine learning and pattern matching to discover and protect your sensitive data in AWS.
+Macie automatically provides an inventory of Amazon S3 buckets including a list of unencrypted buckets, publicly accessible buckets, and buckets shared with AWS accounts outside those you have defined in AWS Organizations. Then, Macie applies machine learning and pattern matching techniques to the buckets you select to identify and alert you to sensitive data, such as personally identifiable information (PII). Macie’s alerts, or findings, can be searched and filtered in the AWS Management Console and sent to Amazon CloudWatch Events for easy integration with existing workflow or event management systems, or to be used in combination with AWS services, such as AWS Step Functions to take automated remediation actions. This can help you meet regulations, such as the Health Insurance Portability and Accountability Act (HIPAA) and General Data Privacy Regulation (GDPR). You can get started with Amazon Macie with a few clicks in the AWS Management Console.
+
 # Compute and Related Storage
 
 ## EC2
@@ -150,9 +209,21 @@ Remember Pricing models
 3. Spot (bid for): You place a bid and While the price is within your bid you are provisioned instances, when it goes up your instances are terminated, if the instance is terminate because the spot price went up you won't be charged for partial hour, you are charge for partial hour if you terminate the instance(s) yourself (\*popular question).
 4. Dedicated Hosts (physical server dedicated to your use).Remember EC2 instance Types use cases (see docs folder).
 
+**User Data (running scripts etc)**
+You can specify user data to configure an instance or run a configuration script during launch. If you launch more than one instance at a time, the user data is available to all the instances in that reservation.
+
+**Placement Groups**
+When you launch a new EC2 instance, the EC2 service attempts to place the instance in such a way that all of your instances are spread out across underlying hardware to minimize correlated failures. You can use placement groups to influence the placement of a group of interdependent instances to meet the needs of your workload. Depending on the type of workload, you can create a placement group using one of the following placement strategies:
+
+`Cluster` – packs instances close together inside an Availability Zone. This strategy enables workloads to achieve the low-latency network performance necessary for tightly-coupled node-to-node communication that is typical of HPC applications.
+
+`Partition` – spreads your instances across logical partitions such that groups of instances in one partition do not share the underlying hardware with groups of instances in different partitions. This strategy is typically used by large distributed and replicated workloads, such as Hadoop, Cassandra, and Kafka.
+
+`Spread` – strictly places a small group of instances across distinct underlying hardware to reduce correlated failures.
+
 ## EBS (Elastic Block Storage) : Disk
 
-You can create storage volumes and attach them to EC2 instances.
+You can create storage volumes and attach them to EC2 instances. EBS volumes are loosely coupled to EC2 instances, can attache and detach except for the root volume.
 **Types of volumes**:
 **SSD**
 
@@ -210,6 +281,9 @@ You will be more tested on classic load balancers even thought they are legacy.
 Lambadas functions can trigger other lambadas functions.
 AWS X-ray can be used to debug complex Lambda infrastructures.
 
+**How are compute resources assigned to an AWS Lambda function?**
+In the AWS Lambda resource model, you choose the amount of memory you want for your function, and are allocated proportional CPU power and other resources. For example, choosing 256MB of memory allocates approximately twice as much CPU power to your Lambda function as requesting 128MB of memory and half as much CPU power as choosing 512MB of memory. To learn more, see our Function Configuration documentation.
+
 **Lambda Triggers:**
 **Services that invoke Lambda functions synchronously:**
 
@@ -262,6 +336,7 @@ HTTP status code is 429.
 Request throughput limit exceeded.
 You can contact AWS and request that limit to be increased.
 For lambdas that are really critical to your business, you can reserve concurrency for them to guarantee a set number of executions which will always be available for your critical function, however this also can act as a limit.
+Environment Variables: There is no limit to the total of environment variables as long as the total size does not exceed 4KB.
 
 **Versions**
 When you create a new Lambda there is only one version, $LATEST.
@@ -304,6 +379,63 @@ USe `vpc-config` to set VPC Private Subnet ID and Security Group ID, so Lambda c
 ## Step Functions
 
 AWS Step Functions is a serverless function orchestrator that makes it easy to sequence AWS Lambda functions and multiple AWS services into business-critical applications. Through its visual interface, you can create and run a series of checkpointed and event-driven workflows that maintain the application state. The output of one step acts as input into the next. Each step in your application executes in order and as expected based on your defined business logic.
+
+**Amazon States Language**
+The Amazon States Language is a JSON-based, structured language used to define your state machine, a collection of states, that can do work (Task states), determine which states to transition to next (Choice states), stop an execution with an error (Fail states), and so on.
+
+```
+{
+  "Comment": "An example of the Amazon States Language using a choice state.",
+  "StartAt": "FirstState",
+  "States": {
+    "FirstState": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-east-1:123456789012:function:FUNCTION_NAME",
+      "Next": "ChoiceState"
+    },
+    "ChoiceState": {
+      "Type" : "Choice",
+      "Choices": [
+        {
+          "Variable": "$.foo",
+          "NumericEquals": 1,
+          "Next": "FirstMatchState"
+        },
+        {
+          "Variable": "$.foo",
+          "NumericEquals": 2,
+          "Next": "SecondMatchState"
+        }
+      ],
+      "Default": "DefaultState"
+    },
+
+    "FirstMatchState": {
+      "Type" : "Task",
+      "Resource": "arn:aws:lambda:us-east-1:123456789012:function:OnFirstMatch",
+      "Next": "NextState"
+    },
+
+    "SecondMatchState": {
+      "Type" : "Task",
+      "Resource": "arn:aws:lambda:us-east-1:123456789012:function:OnSecondMatch",
+      "Next": "NextState"
+    },
+
+    "DefaultState": {
+      "Type": "Fail",
+      "Error": "DefaultStateError",
+      "Cause": "No Matches!"
+    },
+
+    "NextState": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-east-1:123456789012:function:FUNCTION_NAME",
+      "End": true
+    }
+  }
+}
+```
 
 ## API Gateway
 
@@ -416,6 +548,13 @@ When you deploy a Docker container on beanstalk you can choose from:
 
 1. Single Docker Container per EC2: Single Docker container o a EC2 instance.
 2. Multiple Docker Containers: Use ElasticBeansTalk to build an ECS cluster and deploy multiple containers er instance.
+
+**Beanstalk Worker Environment**
+If your AWS Elastic Beanstalk application performs operations or workflows that take a long time to complete, you can offload those tasks to a dedicated worker environment. Decoupling your web application front end from a process that performs blocking operations is a common way to ensure that your application stays responsive under load.
+To avoid running long-running tasks locally, you can use the AWS SDK for your programming language to send them to an Amazon Simple Queue Service (Amazon SQS) queue, and run the process that performs them on a separate set of instances.
+Elastic Beanstalk worker environments simplify this process by managing the Amazon SQS queue and running a daemon process on each instance that reads from the queue for you. When the daemon pulls an item from the queue, it sends an HTTP POST request locally to http://localhost/ on port 80 with the contents of the queue message in the body. All that your application needs to do is perform the long-running task in response to the POST.
+With periodic tasks, you can also configure the worker daemon to queue messages based on a cron schedule.
+You can define periodic tasks in a file named cron.yaml in your source bundle to add jobs to your worker environment's queue automatically at a regular interval.
 
 # DNS
 
@@ -622,6 +761,17 @@ ACID (Atomic, Consistent, Isolated, Durable) Transactions.
 3. Isolation guarantees the individuality of each transaction, and prevents them from being affected from other transactions.
 4. Durability ensures transactions are saved permanently and do not accidentally disappear or get erased, even during a database crash.
 
+**Conditional Write Operations**
+Conditional writes are a way of asking DynamoDB to perform a write operation like PutItem , UpdateItem , or DeleteItem , but only if certain attributes of the item still have the values that you expect, right before the write goes through. You can have conditional PUT, Delete, Update and Transactions.
+
+**Batch Operations**
+BatchWriteItem, BatchGetItem
+
+**Optimistic Lock with Version Number**
+Optimistic locking is a strategy to ensure that the client-side item that you are updating (or deleting) is the same as the item in Amazon DynamoDB. If you use this strategy, your database writes are protected from being overwritten by the writes of others, and vice versa.
+With optimistic locking, each item has an attribute that acts as a version number. If you retrieve an item from a table, the application records the version number of that item. You can update the item, but only if the version number on the server side has not changed.
+If there is a version mismatch, it means that someone else has modified the item before you did. The update attempt fails, because you have a stale version of the item. If this happens, you simply try again by retrieving the item and then trying to update it.
+
 **DynamoDB TTL**
 Define an expiry time for your data. Expired items are marked for deletion and deleted.
 Great for removing old irrelevant data such as expired sessions, event logs, temporary data.
@@ -666,8 +816,11 @@ Avoid using scan operations, if a query is to frequent it is better to create a 
 1 read capacity unit = 1 x 4KB consistent read per second.
 1 read capacity unit = 2 x 4KB eventually consistent read per second.
 
-DAX in-memory caching for readings. You point your API to DAX cluster instead of your table.
-Some API Calls: GetItem, BatchGetItem, PutItem, BatchWriteItem
+**DAX**
+DAX is an in-memory caching for readings. You point your API to DAX cluster instead of your table.
+Some API Calls: GetItem, BatchGetItem, PutItem, BatchWriteItem.
+It delivers microseconds performance for eventual consistent reads.
+Dax provides operation costs reduction because you can reduce the required read capacity unit to serve intense or burst reading demands. DAX is ReadThrough/WriteThrough.
 
 # Storage
 
@@ -749,6 +902,20 @@ Bucker Policies: Applied at a BUCKET level.
 
 ACLs: Applied at an OBJECT level.
 
+**Policy Language Overview**
+
+`Resources` – Buckets, objects, access points, and jobs are the Amazon S3 resources for which you can allow or deny permissions. In a policy, you use the Amazon Resource Name (ARN) to identify the resource. For more information, see Amazon S3 Resources.
+
+`Actions` – For each resource, Amazon S3 supports a set of operations. You identify resource operations that you will allow (or deny) by using action keywords.
+For example, the s3:ListBucket permission allows the user to use the Amazon S3 GET Bucket (List Objects) operation. For more information, see Amazon S3 Actions.
+
+`Effect` – What the effect will be when the user requests the specific action—this can be either allow or deny.
+If you do not explicitly grant access to (allow) a resource, access is implicitly denied. You can also explicitly deny access to a resource.You might do this to make sure that a user can't access the resource, even if a different policy grants access. For more information, see IAM JSON Policy Elements: Effect.
+
+`Principal` – The account or user who is allowed access to the actions and resources in the statement. In a bucket policy, the principal is the user, account, service, or other entity that is the recipient of this permission. For more information, see Principals.
+
+`Condition` – Conditions for when a policy is in effect. You can use AWS‐wide keys and Amazon S3‐specific keys to specify conditions in an Amazon S3 access policy. For more information, see Amazon S3 Condition Keys.
+
 **S3 Encryption**
 SSL/TLS (in-transit)
 At rest: use x-amz-server-side-encryption: AES256
@@ -761,9 +928,17 @@ Ideally, to enforce the use of encryption for a bucket, because encryption only 
 **transfer acceleration**
 Amazon S3 Transfer Acceleration enables fast, easy, and secure transfers of files over long distances between your client and an S3 bucket. Transfer Acceleration takes advantage of Amazon CloudFront’s globally distributed edge locations. As the data arrives at an edge location, data is routed to Amazon S3 over an optimized network path.
 
+**S3 Select**
+S3 Select capability is designed to pull out only the data you need from an object, which can dramatically improve the performance and reduce the cost of applications that need to access data in S3.
+Most applications have to retrieve the entire object and then filter out only the required data for further analysis. S3 Select enables applications to offload the heavy lifting of filtering and accessing data inside objects to the Amazon S3 service. By reducing the volume of data that has to be loaded and processed by your applications, S3 Select can improve the performance of most applications that frequently access data from S3 by up to 400%.
+You can use S3 Select from the AWS SDK for Java, AWS SDK for Python, and AWS CLI.
+
 # Distribution
 
 ## CloudFront
+
+CloudWatch is a metric repository, metrics have retention period, across the dirrerent services CloudWatch has default metrics and you can create your own custom metrics.
+CloudWatch has alarms, which is a way to watch metrics and trigger SNS or SQL when a specific condition is met.
 
 Terminology:
 Origin: This is the origin of all files that the CDN will distribute. Origin can be an S3, EC2 instance, ELB or Route53.
@@ -846,6 +1021,13 @@ For FIFO queues, the change will affect the messages already in the queue.
 **Large Messages**
 For large message, from 256KB to 2GB, use S3 to store the message and use AWS SQS Extend Client library for Java to manage them.
 
+**Encryption**
+You can enable encrypted messages in both Standard and FIFO queues using a key provided by AWS KMS.
+To enable SSE for a queue, you can use the AWS-managed customer master key (CMK) for Amazon SQS or a custom CMK.
+To enable SSE for a new or existing queue using the Amazon SQS API, specify the customer master key (CMK) ID: the alias, alias ARN, key ID, or key ARN of the an AWS-managed CMK or a custom CMK by setting the KmsMasterKeyId attribute of the CreateQueue or SetQueueAttributes action.
+To send messages to an encrypted queue, the producer must have the kms:GenerateDataKey and kms:Decrypt permissions for the CMK.
+To receive messages from an encrypted queue, the consumer must have the kms:Decrypt permission for any CMK that is used to encrypt the messages in the specified queue.
+
 ## Kinesis
 
 Amazon Kinesis makes it easy to collect, process, and analyze real-time, streaming data so you can get timely insights and react quickly to new information.
@@ -883,12 +1065,16 @@ It manages the number of record processors relative to the number of shards & co
 If you have only one consumer, the KCL will create all the record processors on a single consumer.
 If you have two consumers it will load balance and create half the processors in one instance and half in the other.
 
-Scaling:
+**Scaling**
 With KCL, generally you should ensure that the number of instances does not exceed the number of shards (except for failure and standby purposes).
 You never need multiple instances to handle the processing load of one shard.
 One worker can process multiple shards.
 Use CPU Utilization to drive the quantity of consumer instances you need, not the number of shards in your stream.
 Use the autoscaling group, and base scaling decisions on CPU load.
+
+**Security**
+Kinesis provides Encryption in Flight with HTTPS.
+It also allows for server-side encryption, which automatically encrypts data before it's at rest by using an AWS KMS customer master Key (CMK) you specify. Data is encrypted before it is written to the Kinesis stream storage layer, and decrypted after it is retrieved from storage.
 
 NOTES:
 In the exam you will be given different scenarios and you have to identify which kinesis service should be used.
@@ -902,6 +1088,9 @@ Source Control.
 ## CodeBuild
 
 Compiles source code, run tests and produces packages to be deployed.
+
+**Encryption**
+If you want to encrypt CodeBuild build output artifacts you have to specify a KMS key to use. CodeBuild needs access to an AWS KMS customer master key (CMK). By default CodeBuild uses the AWS-managed CMK for Amazon S3 in your AWS account. You can
 
 NOTES:
 Remember the docker commands to build tag and push docker images
@@ -993,6 +1182,8 @@ It always source its templates from S3.
 Resources are defined using a CloudFormation template, YAML or JSON.
 CloudFormation interprets the template and makes the appropriate API calls to create the resources you have defined. The resulting resources are called a stack.
 
+If during the creation phase any resource in the stack cannot be created, CloudFormation will delete the previous created resources and the stack creation is terminated.
+
 Template Structure:
 
 ```
@@ -1027,7 +1218,7 @@ Template Structure:
   },
 
   "Outputs" : {
-    Describes the values that are returned whenever you view your stack's properties. For example, you can declare an output for an S3 bucket name and then call the aws cloudformation describe-stacks AWS CLI command to view the name.
+    Describes the values that are returned whenever you view your stack's properties. For example, you can declare an output for an S3 bucket name and then call the aws cloudformation describe-stacks AWS CLI command to view the name. Exported output values must have a unique name within a single region to avoid conflicts.
   }
 }
 
@@ -1079,6 +1270,10 @@ Resources:
 
 ```
 
+**Parameters and Functions**
+`!GetAtt`: Intrinsic function which returns the value of a parameter of an attribute from a resource in the template. We can use it to get for example, the region ID attribute of the required instance in the resource.
+`Ref`: The intrinsic function Ref returns the value of the specified parameter or resource.
+
 Exams tips:
 Remember `buildspac.yml` file is for CodeBuild
 Remember `appspec.yml` file is for CodeDeploy
@@ -1111,6 +1306,12 @@ IAM Policies: More global, many services.
 ## X-Ray
 
 AWS X-Ray helps developers analyze and debug production, distributed applications, such as those built using a microservices architecture. With X-Ray, you can understand how your application and its underlying services are performing to identify and troubleshoot the root cause of performance issues and errors. X-Ray provides an end-to-end view of requests as they travel through your application, and shows a map of your application’s underlying components. You can use X-Ray to analyze both applications in development and in production, from simple three-tier applications to complex microservices applications consisting of thousands of services.
+
+**X-Ray can help**
+Create a Service Map.
+Identify Errors and Bug by analyzing the response code for each request made in your application.
+Identify performance bottlenecks.
+It provides a set of query APIs so you can build your own analysis and visualization apps.
 
 **Architecture**
 
@@ -1175,6 +1376,20 @@ Default Ec2 properties that are monitored.
 CloudTrail monitor API calls.
 We also have aWS Config, which records the state of your AWS environment and can notify you when changes occur.
 
+## CloudTrail
+
+AWS CloudTrial stores logs on API usage on S3, it can be used to help you answer questions requiring detailed analysis such as:
+Who shut down a specific instance?
+Who changed a security group configuration?
+Is any activity coming from an unknown IP address?
+What activities were denied due to lack of permissions?
+
+## AWS Application Discovery Service
+
+AWS Application Discovery Service helps enterprise customers plan migration projects by gathering information about their on-premises data centers.
+Planning data center migrations can involve thousands of workloads that are often deeply interdependent. Server utilization data and dependency mapping are important early first steps in the migration process. AWS Application Discovery Service collects and presents configuration, usage, and behavior data from your servers to help you better understand your workloads.
+The collected data is retained in encrypted format in an AWS Application Discovery Service data store. You can export this data as a CSV file and use it to estimate the Total Cost of Ownership (TCO) of running on AWS and to plan your migration to AWS. In addition, this data is also available in AWS Migration Hub, where you can migrate the discovered servers and track their progress as they get migrated to AWS.
+
 # Other
 
 ## AWS CLI
@@ -1195,6 +1410,13 @@ When you do the above the AWS CLI will still return the full list of objects but
 
 NOTES:
 If you see "timeout" error, adjust page size.
+
+## Test Axioms
+
+1. Always check security groups and network access control list when troubleshooting.
+2. Instances launched into a private subnet in a VPC can't access the internet unless you use NAT.
+3. You need an IGW (Internet Gateway) and a route in the route table to talk to the internet.
+4. EBS volumes are loosely coupled to EC2 instances, can attache and detach except for the root volume.
 
 ## Whitepaper and Videos
 
