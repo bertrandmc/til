@@ -918,6 +918,21 @@ You can define periodic tasks in a file named cron.yaml in your source bundle to
 
 AWS DNS service. Allows you to map domains names to EC2, ELBs, CLoudFront, S3 buckets.
 
+Records:
+A: hostname to IPv4.
+AAAA: hostname to IPv6.
+CNAME: hostname to non-root hostname.
+Alias: hostname to AWS resource.
+
+In Route53 you can use public domains and private domain (these are private to your VPC).
+It has advanced features like:
+
+- Load Balancing (through DNS - also called client load balancing).
+- Health Checks (with some limitations).
+- Routing policies.
+
+You pay \$0.50 per month per hosted zone.
+
 **Routing Policies**
 When you create a record, you choose a routing policy, which determines how Amazon Route 53 responds to queries:
 
@@ -934,6 +949,14 @@ When you create a record, you choose a routing policy, which determines how Amaz
 `Multivalue answer routing policy` – Use when you want Route 53 to respond to DNS queries with up to eight healthy records selected at random.
 
 `Weighted routing policy` – Use to route traffic to multiple resources in proportions that you specify.
+
+NOTES:
+Updated to route may be reflected immediately to your clients if they already cached and waiting for TTL to expire.
+
+**HealthChecks**
+Unhealthy when 3 checks fail.
+Healthy when 3 checks pass.
+Checks interval defaults to 30 seconds but can configure to 10s (incur extra costs).
 
 # Databases
 
@@ -1301,12 +1324,16 @@ Sub-resources (Bucket policies, ACLs) and CORS.
 
 Limits:
 5G max put size (max file size is 5TB, so you need multi-part upload to upload files larger then 5GB)
-3500 put requests/s.
-5500 get requests/s.
+3500 put requests/s per second per partitioned prefix.
+5500 get requests/s per second per partitioned prefix.
+Latency 100-200ms.
+
+KMS and Performance:
+When using SSE-KMS S3 will make requests to KMS service's `GenerateDataKey` API and when the DataKey is download S3 will call Encrypt/Decrypt API. If you have too many requests you might hit KMS requests/s limit, which is 5,500 request/s and this quota cannot be changed, if that happens your requests will be throttled, so a good strategy is to use back propagation.
 
 **Data Consistency Models**
 
-1. Read and Write consistency for PUTS of new Objects. This means as soon you upload the file it becomes available to read.
+1. Read and Write consistency for PUTS of new Objects. This means as soon you upload the file it becomes available to read. (Note that if you do a GET before the object is PUT the response will be a 404, if you then PUT the object and try a GET again, even though it is the first time the object is being PUT, there is a chance you'll get a 404 due S3 caching).
 2. Eventual Consistency for overwrite PUTS and DELETES (can take some time to propagate).
 
 S3 is a key-value store, the key is the name of the object and the value is the file data.
@@ -1319,7 +1346,7 @@ Files have metadata (data about the stored file).
 2. Cross Origin Resource Charing (CORS). Allows files located in one bucket to access files located in another bucket by specifying on the bucket the origin of request coming from another bucker.
 3. Transfer Acceleration.
 
-**Tired Storage**
+**Storage Tiers**
 More info here but vary occurs on read, for example glacier can take a while. see this
 https://aws.amazon.com/s3/storage-classes/?nc=sn&loc=3#Performance_across_the_S3_Storage_Classes
 S3 Standard storage class is designed for 99.99% availability.
@@ -1335,27 +1362,14 @@ Fee for storage management (Inventory, Analytics, Object Tags).
 Fee for Data Management Pricing (data transfered out of S3).
 Fee for transfer acceleration.
 
-NOTES:
-S3 is object based.
-Files form 0 to 5TB.
-Unlimited storage.
-S3 is a universal namespace.
-S3 Tiers. (S3 default, IA, One Zone IA, Glacier, Intelligent).
-S3 core fundamentals
-S3 core fundamentals.
-read https://aws.amazon.com/s3/faqs/
-Performance:
-For GET-Intensive workloads use Cloudfront.
-For Mixed-workloads avoid sequential key names for your objects. Instead add a random prefix like an hex or timestamp to the key name to prevent multiple objects from being store in the same partition (avoiding likelihood of IO contention).
-
 **S3 Security**
 By default all created buckets are private and only the owner can manage files.
-You can control using ACL or Policies.
-S3 buckets can be configured to create access logs, which logs all requests made to it. The logs can be stored in another bucket.
+`User based security`: This is based on IAM policies, IAM controls which API calls a user is allowed. You attach IAM pocilies to users, groups and roles (which are attached to instances etc).
+`Resource based security`: This are Bucket policies, with them we say what principals can or cannot do in our buckets and objects. S3 bucket policies, on the other hand, are attached only to S3 buckets. S3 bucket policies specify what actions are allowed or denied for which principals on the bucket that the bucket policy is attached to (e.g. allow user Alice to PUT but not DELETE objects in the bucket). S3 bucket policies are a type of access control list, or ACL (here I mean “ACL” in the generic sense, not to be confused with S3 ACLs, which is a separate S3 feature discussed later in this post). You attach S3 bucket policies at the bucket level (i.e. you can’t attach a bucket policy to an S3 object), but the permissions specified in the bucket policy apply to all the objects in the bucket.
+`Object Access Control List`: This is for finer grained controls, you can set access rules at an object level.
 
-Bucker Policies: Applied at a BUCKET level.
-
-ACLs: Applied at an OBJECT level.
+An IAM principal can access an S3 object if either the user's IAM permissions or the resource policy allows it.
+Make sure there is no explicitly DENY, remember AWS access evaluation logic, explicit denies are always enforced.
 
 **Policy Language Overview**
 
@@ -1371,14 +1385,37 @@ If you do not explicitly grant access to (allow) a resource, access is implicitl
 
 `Condition` – Conditions for when a policy is in effect. You can use AWS‐wide keys and Amazon S3‐specific keys to specify conditions in an Amazon S3 access policy. For more information, see Amazon S3 Condition Keys.
 
+**Networking**
+We can access S3 privately through a VPC and VPN.
+API call can be logged to CloudTrail.
+
+**Logging**
+S3 buckets can be configured to create access logs, which logs all requests made to it. The logs can be stored in another bucket.
+
+**MFA**
+MFA can be required in versioned buckets to delete objects.
+
+**MFA delete**
+If a bucket's versioning configuration is MFA Delete–enabled, the bucket owner must include the `x-amz-mfa` request header in requests to permanently delete an object version or change the versioning state of the bucket. Requests that include x-amz-mfa must use HTTPS. The header's value is the concatenation of your authentication device's serial number, a space, and the authentication code displayed on it. If you do not include this request header, the request fails.
+`x-amz-mfa`: [MFADeviceSerialNumber] and [AuthenticationCode]
+
+**Pre-Signed URL**
+Used to allow access to specific objects only for a limited time.
+Can be created using the SDK and CLI.
+Default expiration time is 3600 seconds. This can be changed with `--expires-in: TIME_IN_SECONDS` argument.
+
 **S3 Encryption**
 SSL/TLS (in-transit)
 At rest: use x-amz-server-side-encryption: AES256
-Ideally, to enforce the use of encryption for a bucket, because encryption only happen if PUT request includes the x-amz-server-side-encryption, it is safer to create a Policy to deny all PUT requests that dont' include x-amz-server-side-encryption.
+Ideally, to enforce the use of encryption for a bucket, because encryption only happen if PUT request includes the x-amz-server-side-encryption, it is safer to create a Policy to deny all PUT requests that don't include x-amz-server-side-encryption.
 
 1. SS3-S3: S3 Managed Keys. (the encryption key is also encrypted with another key that AWS rotates periodically). (Supports HTTP and HTTPS)
 2. SSE-KMS: AWS Key Management Service, Managed Keys. (Supports HTTP and HTTPS)
 3. SSE-C: Server side encryptions with customer provided keys. (Supports HTTPS only)
+   The Encryption Data Key key is provided in every request, the following headers are required:
+   `x-amz-server-side​-encryption​-customer-algorithm`: The header value must be "AES256"
+   `x-amz-server-side​-encryption​-customer-key`: Use this header to provide the 256-bit, base64-encoded encryption key.
+   `x-amz-server-side​-encryption​-customer-key-MD5`: Use this header to provide the base64-encoded 128-bit MD5 digest of the encryption key according to RFC 1321. Amazon S3 uses this header for a message integrity check to ensure that the encryption key was transmitted without error.
 
 **transfer acceleration**
 Amazon S3 Transfer Acceleration enables fast, easy, and secure transfers of files over long distances between your client and an S3 bucket. Transfer Acceleration takes advantage of Amazon CloudFront’s globally distributed edge locations. As the data arrives at an edge location, data is routed to Amazon S3 over an optimized network path.
@@ -1387,6 +1424,60 @@ Amazon S3 Transfer Acceleration enables fast, easy, and secure transfers of file
 S3 Select capability is designed to pull out only the data you need from an object, which can dramatically improve the performance and reduce the cost of applications that need to access data in S3.
 Most applications have to retrieve the entire object and then filter out only the required data for further analysis. S3 Select enables applications to offload the heavy lifting of filtering and accessing data inside objects to the Amazon S3 service. By reducing the volume of data that has to be loaded and processed by your applications, S3 Select can improve the performance of most applications that frequently access data from S3 by up to 400%.
 You can use S3 Select from the AWS SDK for Java, AWS SDK for Python, and AWS CLI.
+
+**S3 Websites**
+<BUCKET_NAME>.s3-website.<AWS_REGION>.amazonaws.com
+Bucket must be public otherwise 403 forbidden.
+To make the bucket public, besides disabling `Block Public Access` options we also need to create a policy to explicitly allow `GET` access.
+CORS: `Acces-Control-Allow-Origin`. If the website needs to get resources from a different bucket CORS must be enabled on the second bucket to allow CORS requests from the main bucket.
+
+**S3 Replication**
+You can replicate objects between different AWS Regions or within the same AWS Region (versioning must be active in the bucket).
+`Cross-Region replication (CRR)` is used to copy objects across Amazon S3 buckets in different AWS Regions.
+`Same-Region replication (SRR)` is used to copy objects across Amazon S3 buckets in the same AWS Region.
+
+S3 doesn't replicate DELETE requests.
+Object that were in the origin bucket before replication is activated won't be replicated.
+
+When to use replications:
+
+- Meet compliance requirements.
+- Minimize latency - If your customers are in two geographic locations, you can minimize latency in accessing objects by maintaining object copies in AWS Regions that are geographically closer to your users.
+- Increase operational efficiency — If you have compute clusters in two different AWS Regions that analyze the same set of objects, you might choose to maintain object copies in those Regions.
+
+Replication can help you do the following:
+
+- Replicate objects while retaining metadata — You can use replication to make copies of your objects that retain all metadata, such as the original object creation time and version IDs. This capability is important if you need to ensure that your replica is identical to the source object
+- Replicate objects into different storage classes — You can use replication to directly put objects into S3 Glacier, S3 Glacier Deep Archive, or another storage class in the destination bucket. You can also replicate your data to the same storage class and use lifecycle policies on the destination bucket to move your objects to a colder storage class as it ages.
+- Maintain object copies under different ownership — Regardless of who owns the source object, you can tell Amazon S3 to change replica ownership to the AWS account that owns the destination bucket. This is referred to as the owner override option. You can use this option to restrict access to object replicas.
+- Replicate objects within 15 minutes — You can use S3 Replication Time Control (S3 RTC) to replicate your data in the same AWS Region or across different Regions in a predictable time frame. S3 RTC replicates 99.99 percent of new objects stored in Amazon S3 within 15 minutes (backed by a service level agreement). For more information, see Meet compliance requirements using S3 Replication Time Control (S3 RTC).
+
+**S3 LifeCycle Configuration Rules**
+To manage your objects so that they are stored cost effectively throughout their lifecycle, configure their Amazon S3 Lifecycle. An S3 Lifecycle configuration is a set of rules that define actions that Amazon S3 applies to a group of objects. There are two types of actions:
+`Transition actions` —D efine when objects transition to another storage class. For example, you might choose to transition objects to the S3 Standard-IA storage class 30 days after you created them, or archive objects to the S3 Glacier storage class one year after creating them.
+`Expiration actions` — Define when objects expire. Amazon S3 deletes expired objects on your behalf.
+
+**S3 Performance**
+`Use multi-part upload`
+
+`Use S3 Transfer Acceleration (For upload only)`
+Allow users to upload to Edge location and then file is transferred to bucket using AWS private network.
+
+`Use S3 Byte-Range Fetches to read Files efficiently`
+With this you can parallelize GETs by requesting specific byte ranges. This also provides better resilience in case of failures because you have to retry just the parts that have failed.
+Another use case is for example when you just need to check the header of the file and knowns that the header comes with the first XX bytes of the file, this way, instead of downloading the whole file, just download what is needed.
+
+**S3 Event Notification**
+
+NOTES:
+S3 is object based.
+Files form 0 to 5TB.
+Unlimited storage.
+S3 is a universal namespace.
+S3 Tiers. (S3 default, Intelligent, IA, One Zone IA, Glacier, Glacier Deep Archive,).
+Performance:
+For GET-Intensive workloads use Cloudfront.
+For Mixed-workloads avoid sequential key names for your objects. Instead add a random prefix like an hex or timestamp to the key name to prevent multiple objects from being store in the same partition (avoiding likelihood of IO contention).
 
 ## Storage Gateway
 
