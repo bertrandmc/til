@@ -806,16 +806,38 @@ What API Gateway can do:
 7. Maintain multiple versions of the API.
 8. Caching.
 
-**Advanced Features**
+**Types of Deployment**
+
+- Edge-Optimized:
+  API Gateway provide end users with the lowest possible latency for API requests and responses by taking advantage of our global network of edge locations using Amazon CloudFront. Throttle traffic and authorize API calls to ensure that backend operations withstand traffic spikes and backend systems are not unnecessarily called.
+- Regional:
+  For users within the same region. You could also add a CloudFront distribution in front of the regional deployment if you want more control instead of the Edge-Optimized option.
+- Private:
+  Can only be accessed from within the VPC.
+  **Advanced Features**
 
 Import Using Swagger Files:
 You can use API Gateway Import API feature to import an API from an external definition file into API Gateway. Currently it supports Swagger v2.
 With the Import API, you can either create a new API by submitting a POST request that includes a Swagger definition in the payload and endpoint configuration, or you can update an existing API by using a PUT request that contains a Swagger definition in the payload. You can update an API by overwriting it with a new definition, or merge a definition with an existing API. You specify the options using a mode query parameter int he request URL.
 
-Throttling:
+**Throttling**
 By default API Gateway limits the steady-state request rate to 10K requests per second.
 The maximum concurrent requests is 5K requests across all APIs within an AWS account.
 If you go over 10K requests per second or 5K concurrent requests you will receive a 429 Too Many requests error response.
+
+**Security**
+With Amazon API Gateway, you can optionally set your API methods to require authorization. When setting up a method to require authorization you can leverage AWS Signature Version 4 or Lambda authorizers to support your own bearer token auth strategy.
+
+- IAM
+  You can use AWS IAM credentials - access and secret keys - to sign requests to your service and authorize access like other AWS services. The signing of an Amazon API Gateway API request is managed by the custom API Gateway SDK generated for your service.
+
+- Custom authorizer
+  Lambda authorizers are AWS Lambda functions. With custom request authorizers, you will be able to authorize access to APIs using a bearer token auth strategy such as OAuth. When an API is called, API Gateway checks if a Lambda authorizer is configured, API Gateway then calls the Lambda function with the incoming authorization token. You can use Lambda to implement various authorization strategies (e.g. JWT verification, OAuth provider callout) that return IAM policies which are used to authorize the request. If the policy returned by the authorizer is valid, API Gateway will cache the policy associated with the incoming token for up to 1 hour.
+
+- Cognito User Pool
+  Cognito User Pools can also be used to authorize access to API Gateway. The way this work is that the user's logs in with Cognito and receives a token, this token is sent with the request header to API Gateway, API Gateway verifies with cognito if that user us correct, if so it allows the request to pass.
+
+There is an `important` different between cognito and the AWS SIGv4 which is that Cognito won't give API Gateway a Policy and so Cognito is not able to validate if the user is actually authorized to use that API, Cognito only recognizes that the token is valid and the user authorized, and so it is for the backend to validate that and respond appropriately.
 
 NOTES:
 API Gateway has caching capabilities.
@@ -824,6 +846,7 @@ You can throttle to prevent attacks.
 You can log results to CloudWatch.
 If you are using Ajax requests that uses multiple domains make sure you enable CORS on API Gateway.
 CORS is enforced by the client.
+Max timeout is 29 seconds.
 
 ## ECR (Elastic Container Registry)
 
@@ -960,6 +983,47 @@ Checks interval defaults to 30 seconds but can configure to 10s (incur extra cos
 
 # Databases
 
+RDS:
+
+- Managed PostgreSQL / MySQL / Oracle / SQL Server.
+- Must provision and EC2 instances & EBS Volume type and size.
+- Support for Read Replicas and Multi AZ.
+- Security Through IAM, Security Groups, KMS, SSL in transit.
+- Backup / Snapshots / Point in time restore feature.
+- Managed and Scheduled maintenance.
+- Monitor through CloudWatch.
+
+Aurora:
+ElastiCache:
+DynamoDB:
+Athena:
+S3:
+Redshift:
+Neptune:
+ElasticSearch:
+
+**Database types**
+RDMS (= SQL/OLTP): RDS, Aurora. Great for joins.
+NoSQL: DynamoDB, ElastiCache (key/value pairs), Nepture (Graphs).
+Object Store: S3, Glacier (for big objects).
+Data Warehouse (SQL Analytics and BI): Redshift (OLAP), Athena (to query S3).
+Search: ElasticSearch (JSON) - free text, unstructured searches.
+Graphs: Neptune - displays relationships between data.
+
+When choosing the right Database evaluate the following:
+Read-heady, write-heavy or balanced workload?
+What throughput you need?
+Will it change?
+Does it need to scale or fluctuate during the day?
+How much data to store and for how long? Will it grow?Average object size?
+How are objects accessed?
+Data durability? Source of truth for data?
+Latency requirements? What number of concurrent users?
+How to you query the data, by key, using joins?
+How is the data, structured, semi-structured?
+Do you need strong schema or more flexibility?
+What kind of search you need?
+
 ## RDS (Relational Database Service) (Used for OLTP).
 
 RDS provides:
@@ -1075,6 +1139,13 @@ Oracle RDS: 1521
 MSSQL Server: 1433
 MariaDB: 3306 (same as MySQL)
 Aurora: 5432 (if PostgreSQL compatible) or 3306 (if MySQL compatible)
+
+**Well-Architected Framework**
+`Operations`: small downtime when failover, maintenance happens. Restore EBS implies manual intervention.
+`Security`: AWs is responsible for OS security, we are responsible for setting up KMS, security groups, IAM policies, authorizing users in DB, using SSL.
+`Reliability`: Multi AZ feature and failover.
+`Performance`: Depends on EC2 instance type , EBS volume type, ability to add Read Replicas. It doesn't auto-scale.
+`Cost`: Pay per hour based on provisioned Ec2 and EBS.
 
 ## RedShift (Relational Database Service for Data Warehouse) (Used for OLAP).
 
@@ -1261,6 +1332,18 @@ Logs are encrypted at rest and stored for 24 hours.
 Accessed using a dedicated endpoint.
 You can use trigger lambdas or listen to the stream in your application.
 Events are recorded in near real-time.
+You need to enable DynamoDB streams.
+
+Benefits:
+
+- Read and write locally, access your data globally
+- Performance
+- Availability, durability, and multi-region fault tolerance
+- Consistency and conflict resolution
+
+**Global Tables**
+Global tables build on the global Amazon DynamoDB footprint to provide you with a fully managed, multi-region, and multi-master database that delivers fast, local, read and write performance for massively scaled, global applications. Global tables replicate your DynamoDB tables automatically across your choice of AWS Regions.
+Global tables eliminate the difficult work of replicating data between Regions and resolving update conflicts.
 
 **ProvisionedThroughputExceededException**
 ProvisionedThroughputExceededException occurs when your request rate is higher than the read/write capacity provisioned for the table.
@@ -1289,6 +1372,7 @@ Reduce the impact of queries and scans by setting a smaller page size which uses
 Isolate scan operations to specific tables and segregate them from your mission-critical traffic.
 Try parallel scan rather than the default sequential scan.
 Avoid using scan operations, if a query is to frequent it is better to create a Global Secondary Index to work on.
+400K is the max size of a document.
 
 1 write capacity unit = 1 x 1KB write per second.
 1 read capacity unit = 1 x 4KB consistent read per second.
@@ -1468,6 +1552,21 @@ With this you can parallelize GETs by requesting specific byte ranges. This also
 Another use case is for example when you just need to check the header of the file and knowns that the header comes with the first XX bytes of the file, this way, instead of downloading the whole file, just download what is needed.
 
 **S3 Event Notification**
+S3 notification feature enables you to receive notifications when certain events happen in your bucket, such as `s3:ObjectCreated:Put`, `s3:ObjectCreated:*` etc.
+Events can be pushed to SQS, SNS and Lambda.
+IMPORTANT: If you want to ensure that an event notification is sent for every successful write, you need to enable versioning on your bucket.
+
+**S3 and Glacier Object Lock**
+S3 Object Lock: Adopts a WORM model (Write Once Read Many).
+You can use it to prevent an object from being deleted or overwritten for a fixed amount of time or indefinitely.
+S3 Object Lock has been assessed by Cohasset Associates for use in environments that are subject to SEC 17a-4, CTCC, and FINRA regulations.
+
+Object Lock provides two ways to manage object retention: retention periods and legal holds.
+
+- A retention period specifies a fixed period of time during which an object remains locked. During this period, your object is WORM-protected and can't be overwritten or deleted.
+- A legal hold provides the same protection as a retention period, but it has no expiration date. Instead, a legal hold remains in place until you explicitly remove it. Legal holds are independent from retention periods.
+
+An object version can have both a retention period and a legal hold, one but not the other, or neither.
 
 NOTES:
 S3 is object based.
@@ -1479,12 +1578,40 @@ Performance:
 For GET-Intensive workloads use Cloudfront.
 For Mixed-workloads avoid sequential key names for your objects. Instead add a random prefix like an hex or timestamp to the key name to prevent multiple objects from being store in the same partition (avoiding likelihood of IO contention).
 
+## Athena
+
+Serverless service to perform analytics directly against S3 files.
+It uses SQL language to query the data.
+Has a JDBC / ODBC driver.
+You ar charged per query and amount of data scanned.
+Supports CSV, JSON, ORC, Avro and Parquet.
+The Athena query engine is based on Presto 0.172 (Presto is a distributed SQL query engine designed to query large data sets distributed over one or more heterogeneous data sources).
+
 ## Storage Gateway
 
 AWS Storage Gateway is a hybrid cloud storage service that gives you on-premises access to virtually unlimited cloud storage. Customers use Storage Gateway to simplify storage management and reduce costs for key hybrid cloud storage use cases. These include moving tape backups to the cloud, reducing on-premises storage with cloud-backed file shares, providing low latency access to data in AWS for on-premises applications, as well as various migration, archiving, processing, and disaster recovery use cases.
 To support these use cases, the service provides three different types of gateways – Tape Gateway, File Gateway, and Volume Gateway – that seamlessly connect on-premises applications to cloud storage, caching data locally for low-latency access. Your applications connect to the service through a virtual machine or hardware gateway appliance using standard storage protocols, such as NFS, SMB, and iSCSI. The gateway connects to AWS storage services, such as Amazon S3, Amazon S3 Glacier, Amazon S3 Glacier Deep Archive, Amazon EBS, and AWS Backup, providing storage for files, volumes, snapshots, and virtual tapes in AWS. The service includes a highly-optimized data transfer mechanism, with bandwidth management, automated network resilience, and efficient data transfer.
 
-# Distribution
+`File Gateway`: Configure S3 buckets to be accessible using NFS (linux) and SMB (windows) protocols.
+`Volume Gateway`: Block storages using iSCSI protocol backed by S3. The Volume Gateway provides either a local cache or full volumes on-premises while also storing full copies of your volumes in the AWS cloud. Volume Gateway also provides Amazon EBS Snapshots of your data for backup, disaster recovery, and migration.
+`Tape Gateway`: Virtual Tape Library backed by S3 and Glacier.
+
+## FSx
+
+Amazon FSx makes it easy and cost effective to launch and run popular file systems that are fully managed by AWS. With Amazon FSx, you can leverage the rich feature sets and fast performance of widely-used open source and commercially-licensed file systems, while avoiding time-consuming administrative tasks such as hardware provisioning, software configuration, patching, and backups. It provides cost-efficient capacity with high levels of reliability, and integrates with a broad portfolio of AWS services to enable faster innovation.
+Amazon FSx provides two file systems to choose from: Amazon FSx for Windows File Server for business applications and Amazon FSx for Lustre for compute-intensive workloads.
+
+What problem does it solve?
+Amazon FSx for Windows
+Because EFS is a shared POSIX system for Linux systems, Amazon create FSx to serve Windows use cases.
+It supports SMB and Windows NTFS protocols.
+It supports Active Directory integration, ACLs and user quotas.
+Built on top of SSDs, scales to 10s of GB/s, millions of IOPS, 100s PB of data.
+
+Amazon FSx for Lustre
+Lustre is a type of parallel distributed file system used in large-scale computing. Many workloads such as machine learning, high-performance computing (HPC), video rendering, and financial simulations depend on compute instances accessing the same set of data through high-performance shared storage. FSx for Lustre offers shared storage with low latencies, up to hundreds of gigabytes per second of throughput, and millions of IOPS. FSx for Lustre offers multiple deployment types, storage types, and throughput performance levels to optimize cost and performance for your workload requirements. FSx for Lustre file systems can also be linked to Amazon S3 buckets, allowing you to access and process data concurrently from both a high-performance file system and from the S3 API.
+
+# Distribution/Content Delivery
 
 ## CloudFront
 
@@ -1498,12 +1625,69 @@ Distribution: This is the name given to the CDN, which consist of a collection o
 Web Distribution: Typically used for websites.
 RTMP: Used for media streaming.
 
+**Origins**
+S3 Bucket.
+Custom Origin (anything which respects the HTTP protocol, ELB, EC2, S3Website)
+
+**Security**
+Use Origin Access Identity to restrict access to an S3 bucket, this way users can only access files through CloudFront.
+
+**CloudFront Signed URL**
+Allow access to a path, no matter the origin.
+Account wide key-pair, only the root can manage it.
+Can filter by IP, path, date, expiration.
+Can leverage cache features.
+
 MaxCache: 365 days (31536000 milliseconds).
 Default: 24 hours (86400 milliseconds).
 Forward Cookies:
 
 NOTES:
 Learn the terminology.
+
+## Global Accelerator
+
+AWS Global Accelerator is a service that improves the availability and performance of your applications with local or global users. It provides static IP addresses that act as a fixed entry point to your application endpoints in a single or multiple AWS Regions, such as your Application Load Balancers, Network Load Balancers or Amazon EC2 instances.
+AWS Global Accelerator uses the AWS global network to optimize the path from your users to your applications, improving the performance of your traffic by as much as 60%.
+
+**Static anycast IP addresses**
+AWS Global Accelerator provides you with static IP addresses that serve as a fixed entry point to your applications hosted in one or more AWS Regions. These IP addresses are anycast from AWS edge locations, so they’re announced from multiple AWS edge locations at the same time. This enables traffic to ingress onto the AWS global network as close to your users as possible. You can associate these addresses to regional AWS resources or endpoints, such as Application Load Balancers, Network Load Balancers, EC2 instances, and Elastic IP addresses. AWS Global Accelerator’s IP addresses serve as the frontend interface of your applications. By using these static IP addresses, you don’t need to make any client-facing changes or update DNS records as you modify or replace endpoints. The addresses are assigned to your accelerator for as long as it exists, even if you disable the accelerator and it no longer accepts or routes traffic.
+
+Benefits:
+
+- Fault tolerance using network zones
+- Global performance-based routing.
+- TCP Termination at the Edge (three-way handshake occurs at the edge).
+- Bring your own IP (BYOIP).
+- Fine-grained traffic control.
+- Continuous availability monitoring.
+- Distributed denial of service (DDoS) resiliency at the edge.
+
+**Global Accelerator vs CloudFront**
+Both use the AWs global network and edges.
+Both integrate with AWS Shield for DDoS protection.
+
+`Global Accelerator`:
+Improves performance for application that need constant communication with servers that are in regions far from the user, the global network and edges are only used to proxy the packages faster than the public network.
+Excellent for UDP, IoT (MQTT), Voice Over IP applications.
+Good for HTTP use cases that require deterministic, fast regional failover.
+
+`CloudFront`:
+Caches content at the edge so most of the time there is no need to a round trip to origin.
+It is about content distribution and not application communication.
+
+## Snollball
+
+Snowball is a petabyte-scale data transport solution that uses secure appliances to transfer large amounts of data into and out of the AWS cloud. Using Snowball addresses common challenges with large-scale data transfers including high network costs, long transfer times, and security concerns.
+
+How Pricing Works: Snowball pricing has four main cost components: (1) a service fee for each job you run, (2) data transfer fees from Amazon S3, (3) the shipping costs to transport a Snowball appliance to and from your address, and (4) the number of days you keep Snowball onsite. For details on each cost component, see AWS Snowball Pricing.
+
+USe cases: Large cloud migrations, disaster recover or anything that involves transferring really large amounts of data that would take long to transfer online, even with S3 acceleration. For example to uplaod 50TB of data to S3 would take around 5 days and cost $5K, with Snowball it would take 2 days and cost 1700$.
+
+To move data from Snowball to S3 Glacier you need to use S3 first and then move the data to Glacier using S3 lifecycle policy.
+
+**Snowball Edge**
+Comes with computing capabilities and allows use to pre-process data while it is being moved in Snowball.
 
 ## SNS
 
@@ -1512,6 +1696,18 @@ SNS can also deliver messages by SMS, email, SQS or any HTTP endpoint.
 SNS notifications can also trigger Lambda functions: when a message is published to an SNS topic that has a Lambda function subscribed to it, the Lambda is invoked with the payload of the published message.
 Stored redundantly across multiple AZs.
 Push based (not need for pulling). Follows a Pub-Sub pattern.
+
+**Protocols**
+In order for customers to have broad flexibility of delivery mechanisms, Amazon SNS supports notifications over multiple transport protocols.
+“HTTP”, “HTTPS”, ”Email”, “Email-JSON”, “SQS” and “SMS”.
+
+**Encryption**
+In-flight HTTPS by default.
+At-rest encryption with KMS.
+
+**Access Control**
+IAM Policies regulate access to SNS APIs.
+SNS Access Policies (Similar to S3 bucket policies can also be used to control access to SNS topics, common use cases are to allow cross-account access and to allow access to other services such as S3 to write to SNS topic.
 
 **SNS vs SQS**
 SNS is push based and SQS is pull based.
@@ -1526,6 +1722,10 @@ SES is a cost-effective, flexible, and scalable email service that enables devel
 Can also be used to receive emails: incoming emails can be delivered automatically to an S3 bucket.
 
 Incoming emails can be used to trigger Lambda functions and SNS notifications.
+
+**Fan Out Patter**
+SNS + SQL can be used to produce the Fan Out pattern, where a message is published in a SNS topic and multiple queues are subscribed to this topic.
+IMPORTANT: SNS cannot send messages to SQS FIFO queues.
 
 # Streams and Queues
 
@@ -1546,7 +1746,7 @@ Visibility Timeout: When message is read it becomes invisible, when the visibili
 `FIFO: First In First Out`
 
 1. Delivery order is guaranteed.
-2. Limited to 300 transactions per second but have all the capabilities of standard queues.
+2. Limited to 300 transactions per second (or 3000 if batching - 10 per batch) but have all the capabilities of standard queues.
 
 **Long Polling**
 It is a way to retrieve messages from the queue. Regular short polling returns immediately and if the queue is empty it returns empty and you pay for this request, with long polling your request waits until a message is available in the queue or the long polling times out. This saves you money.
@@ -1559,9 +1759,6 @@ Messages are kept in queue from 1 minute to 14 days.
 Default retention period is 4 days.
 SQS guarantee that a message will be delivered at least once.
 Default message visibility is 30 seconds (increase it if the task that handles it takes longer, max is 12 hours).
-
-**API Calls**
-ChangeMessageVisibility
 
 **Delay Queues**
 You can postpone the delivery of a message to a queue for a number of seconds.
@@ -1578,6 +1775,19 @@ To enable SSE for a queue, you can use the AWS-managed customer master key (CMK)
 To enable SSE for a new or existing queue using the Amazon SQS API, specify the customer master key (CMK) ID: the alias, alias ARN, key ID, or key ARN of the an AWS-managed CMK or a custom CMK by setting the KmsMasterKeyId attribute of the CreateQueue or SetQueueAttributes action.
 To send messages to an encrypted queue, the producer must have the kms:GenerateDataKey and kms:Decrypt permissions for the CMK.
 To receive messages from an encrypted queue, the consumer must have the kms:Decrypt permission for any CMK that is used to encrypt the messages in the specified queue.
+
+**Access Control**
+Use IAM policies to regulate access to the SQS API.
+SQS Access Policies (similar to S3 Policies), can also be used to control access to each queues, common use cases are to allow cross-account access to the queue and useful to allow access to other services such as SNS, S3 etc to write to the queue.
+
+**SQS and ASG**
+You can have instances in an Auto Scaling Group and set this group to scale according to the queue's length. This is done by creating a CloudWatch alarm which is triggered whenever the CloudWatch metric `ApproximateNumberOfMessages` hits a threshold you determined.
+
+**API Calls**
+ChangeMessageVisibility: If a consumer is taking longer to process a message it can tell the queue to wait longer before putting delivering that message to another consumer. So if the queue's visibility timeout is 30 seconds but the consumer notices it will take longer to process the message it can extend the visibility timeout of this specific message by calling the ChangeMessageVisibility API.
+
+**Dead Letter Queues**
+Queues have the `MaximumReceives` parameter which defines how many times a message can be delivered to consumers, if a message is not processed after MaximumReceives threshold then we can configure the queue to push the message to a Dead Letter Queue so we can debug the message and understand why it wasn't processed.
 
 ## Kinesis
 
@@ -1602,12 +1812,25 @@ By default data is stored for 24 hours but this can be increased to 7 days.
 
 3. Kinesis Analytics
    Amazon Kinesis Data Analytics is the easiest way to analyze streaming data using SQL in real time.
+   Conceptually Kinesis Analytics receive data from Kinesis Streams or Firehose.
+   It auto scales, no need to provision servers and it is real-time.
 
 **Shards Capacity**
+Data is sent to different shards based on the result of a hashing function which is applied to the message key. So the same key id will always go to the same shard, so if you want to sort the messages in a specific way use the key, for example you have messages from clientId 1234, use this ID as key if you want these messages to be processed in order, because they will be sent to the same shard and processed by the same consumer.
+
+A partition key which is highly distributed helps prevent hot partition issues.
+
 Per Shard:
-5 reads/s up to max of 2MB/s.
 1000 writes/s up to max of 1MB/s.
-As your data rate increases you increase the number of shards, and this is called resharding.
+5 reads/s up to max of 2MB/s.
+As your data rate increases you increase the number of shards, and this is called resharding, scaling-in (removing shards) is called merge.
+Data retention is 1 day by default, but can be extended to up to 7 days.
+Messages can be batched to Kinesis.
+Records are ordered per shard.
+
+**ProvisionedThroughputExceededException**
+Happens when sending more data (exceeding MB/s or TPS for any shard).
+Try to check if there are not hot partitions issues, then retries with exponential Backoff.
 
 **Consumers**
 Consumers (EC2s) use the Kinesis client library. The library tracks the number of shards in your stream and they will discover new shards whenever you reshard.
@@ -1617,7 +1840,7 @@ If you have only one consumer, the KCL will create all the record processors on 
 If you have two consumers it will load balance and create half the processors in one instance and half in the other.
 
 **Scaling**
-With KCL, generally you should ensure that the number of instances does not exceed the number of shards (except for failure and standby purposes).
+With Kinesis, generally you should ensure that the number of instances does not exceed the number of shards (except for failure and standby purposes).
 You never need multiple instances to handle the processing load of one shard.
 One worker can process multiple shards.
 Use CPU Utilization to drive the quantity of consumer instances you need, not the number of shards in your stream.
@@ -1627,8 +1850,28 @@ Use the autoscaling group, and base scaling decisions on CPU load.
 Kinesis provides Encryption in Flight with HTTPS.
 It also allows for server-side encryption, which automatically encrypts data before it's at rest by using an AWS KMS customer master Key (CMK) you specify. Data is encrypted before it is written to the Kinesis stream storage layer, and decrypted after it is retrieved from storage.
 
+**Kinesis Consumers**
+To create consumers you can use the AWS CLI and SDK or the Kinesis CLient Library (available for Java, Node, Python etc). The Client Library uses DynamoDB to checkpoint offset and to track other consumers and share the work amongst shards.
+
+**Shard Level Metrics**
+We can enable Shard level metrics to measure:
+Incoming/OutgoingBytes, Incoming/OutgoingRecords...etc.
+These records are send to CloudWatch in a 1 minute period.
+These incur additional costs.
+
 NOTES:
+Kinesis allows you to reprocess/re-play data.
+Once data enters Kinesis it cannot be deleted (immutability).
 In the exam you will be given different scenarios and you have to identify which kinesis service should be used.
+Kinesis Firehose loads data into S3, Redshift, ElasticSearch and Splunk.
+
+## MQ
+
+Amazon MQ is a managed message broker service for Apache ActiveMQ.
+It uses industry-standard APIs and protocols for messaging, including JMS, NMS, AMQP, STOMP, MQTT, and WebSocket.
+It doesn't scale as much as SQS and SNS because we have to provision it.
+It run on dedicated machines and can run in High Availability and with failover.
+It has both Queue features and topic features.
 
 # CI/CD
 
