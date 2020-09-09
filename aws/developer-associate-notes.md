@@ -107,6 +107,60 @@ e.g: `"Resource": "arn:aws:ec2:us-east-1:123456789012:instance/*"`
 WildCards can be used in any position of the ARN path.
 e.g: `"Resource": "arn:aws:ec2:us-east-1:123456789012:*"` or `"Resource": "*"`
 
+**IAM Conditions**
+Apply conditions to make IAM policies more restrictive.
+Some examples:
+
+The below policy says "deny everything for clients where source IP is not from of the specified range".
+
+```
+{
+  "Version": "2012-10-17",
+  "Statements": {
+    "Effect": "Deny",
+    "Action": "*",
+    "Resource": "*",
+    "Condition": {
+      "NotIpAddress": {
+        "aws:SourceIp": ["203.0.113.0/24"]
+      }
+    }
+  }
+}
+```
+
+Other conditions:
+
+```
+// allow inly when requested region is from us-east-1
+"Condition": {
+  "StringEquals": {
+    "aws:RequestedRegion": ["us-east-1"]
+  }
+}
+
+// based on tags
+"Condition": {
+  "StringEquals": {
+    "ec2:ResourceTag/Project": "WebApp" // for example restrict ec2:StopInstances for EC2 tagged with Project: WebApp
+  }
+}
+
+// Force MFA, "deny all actions in all resources if MultiFactorAuthPresent is false"
+"Effect": "Deny",
+"Action": "*",
+"Resource": "*",
+"Condition": {
+  "BoolIfExists": {
+    "aws:MultiFactorAuthPresent": false
+  }
+}
+```
+
+**IAM Roles vs Resource Based Policies**
+When assuming a role (user, application or service), you give up your original permissions and take the permissions assigned to the role.
+When using a resource based policy, the principal doesn't have to give up his permissions.
+
 **Identities providers**: allows you to manage user identities outside AWS. This is useful if your organization already has its own identity system, such as a corporate user directory. It is also useful if you are creating a mobile app or web application that requires access to AWS resources.When you use an IAM identity provider, you don't have to create custom sign-in code or manage your own user identities. The IdP provides that for you. Your external users sign in through a well-known IdP, such as Login with Amazon, Facebook, or Google. You can give those external identities permissions to use AWS resources in your account. IAM identity providers help keep your AWS account secure because you don't have to distribute or embed long-term security credentials, such as access keys, in your application. IAM Identity Providers is compatible with OpenID and SAML (security assertion markup language).
 
 **STS (Security Token Service)**
@@ -143,15 +197,100 @@ Cross account access makes it easier to work productively within a multi-account
 **IAM Policy Simulator**
 It is a tool where you can test the effects of your policies before committing them to production.
 
+**IAM Permission Boundaries**
+Advanced IAM feature to use a managed policy to set the maximum permissions an IAM entity can get.
+IAM Permission Boundaries are supported for users and roles (not groups).
+example: If we attach the below to an IAM user we are limiting the user to perform any action in S3, CloudWatch and EC2, anything else will be denied even if there is a explicit policy allowing it.
+A Permission Boundary policy is similar to an IAM policy but it is not giving these permissions, it is only allowing the user to have them, the user will need a IAM policy to allow those actions.
+use cases:
+
+- Delegate responsibilities to non-administrators within their permission boundaries.
+- Allow developers to self-assign policies and manage their own permissions, while making sure they can't escalate their privileges.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statements": [
+    {
+      "Effect": "Allow",
+      "Action": ["S3:*", "cloudwatch:*", "ec2:*"],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+**Policy Evaluation Logic**
+<img src="./assets/iam-policies-boundaries.png" width="500px" />
+<img src="./assets/iam-evaluation-logic.png" width="100%" />
+
 NOTES:
 Remember the 3 different types of policies.
 
+## Identity Federation
+
+Identity federation is a system of trust between two parties for the purpose of authenticating users and conveying information needed to authorize their access to resources. In this system, an identity provider (IdP) is responsible for user authentication, and a service provider (SP), such as a service or an application, controls access to resources. By administrative agreement and configuration, the SP trusts the IdP to authenticate users and relies on the information provided by the IdP about them. After authenticating a user, the IdP sends the SP a message, called an assertion, containing the user's sign-in name and other attributes that the SP needs to establish a session with the user and to determine the scope of resource access that the SP should grant. Federation is a common approach to building access control systems which manage users centrally within a central IdP and govern their access to multiple applications and services acting as SPs.
+
+Federation can have many flavours:
+
+- SAML 2.0:
+  To integrate with Active Directory or other SAML 2.0 compatible services.
+  User login with AD, AD return SAML assertion, user invokes STS AssumeRoleWithSAML passing the SAML assertion and STS will return the user's temporary credentials.
+  `IMPORTANT`: SAML is the "old-way" of doing this and AWS Single Sign On (SSO) is the new managed simpler way.
+- Custom Identity Broker:
+  For systems that are not compatible with SAML, in that case you write a custom app to do the identity brokerage, so users authenticates against it and the identity broker make calls to STS to request the temporary credentials that will be given to the user.
+- Web Identity Federation with Cognito:
+  Users Logins with an Identity Provider (Google, FB, Cognito UP etc).
+  The Identity Provider gives the user a token.
+  The token is given to Cognito Identity Pool which will get user's temporary credentials from STS.
+- Web Identity Federation without Cognito: (Not recommended, Cognito is the recommended way)..
+- Single Sign On.
+- Non-SAML with AWS Microsoft AD
+
+**Enabling federated AWS access**
+You can use two AWS services to federate your workforce into AWS accounts and business applications: AWS Single Sign-On (SSO) or AWS Identity and Access Management (IAM). AWS SSO is a great choice to help you define federated access permissions for your users based on their group memberships in a single centralized directory. If you use multiple directories, or want to manage the permissions based on user attributes, consider AWS IAM as your design alternative. To learn more about service quotas and other design considerations in AWS SSO, see the AWS SSO User Guide. For AWS IAM design considerations, see the AWS IAM User Guide.
+
+**Enabling federated access to your customer-facing web and mobile apps**
+You can add federation support to your customer-facing web and mobile applications using Amazon Cognito. It helps you add user sign-up, sign-in, and access control to your mobile and web apps quickly and easily. Amazon Cognito scales to millions of users and supports sign-in with social identity providers, such as Apple, Facebook, Google, and Amazon, and enterprise identity providers via SAML 2.0. (see more on Cognito notes).
+
 ## Cognito
 
+Amazon Cognito lets you add user sign-up, sign-in, and access control to your web and mobile apps quickly and easily. Amazon Cognito scales to millions of users and supports sign-in with social identity providers, such as Facebook, Google, and Amazon, and enterprise identity providers via SAML 2.0.
+
+**Cognito and Identity Federation**
+Federation allow users from outside AWS to assume temporary role for accessing AWS resources and these users assume identity provided access roles. Federation can have many flavours:
+SAML 2.0:
+Custom Identity Broker:
+Web Identity Federation with Cognito:
+Web Identity Federation without Cognito:
+Single Sign On.
+Non-SAML with AWS Microsoft AD
 NOTES:
 Cognito uses User Pools to manage user sign-up and sign-in directly or via Web Identity Providers.
 Cognito acts as an Identity Broker, handling all interaction with Web Identity Providers.
 Cognito uses Push Synchronization to send a silent push notification of user data updates to multiple devices types associated with a user ID.
+
+## SSO (AWS Single Sign-On)
+
+AWS Single Sign-On (SSO) makes it easy to centrally manage access to multiple AWS accounts and business applications and provide users with single sign-on access to all their assigned accounts and applications from one place. With AWS SSO, you can easily manage access and user permissions to all of your accounts in AWS Organizations centrally. AWS SSO configures and maintains all the necessary permissions for your accounts automatically, without requiring any additional setup in the individual accounts. You can assign user permissions based on common job functions and customize these permissions to meet your specific security requirements. AWS SSO also includes built-in integrations to many business applications, such as Salesforce, Box, and Office 365.
+
+## AD (AWS Directory Service)
+
+AWS Directory Service for Microsoft Active Directory, also known as AWS Managed Microsoft Active Directory (AD), enables your directory-aware workloads and AWS resources to use managed Active Directory (AD) in AWS. AWS Managed Microsoft AD is built on actual Microsoft AD and does not require you to synchronize or replicate data from your existing Active Directory to the cloud. You can use the standard AD administration tools and take advantage of the built-in AD features, such as Group Policy and single sign-on.
+
+Microsoft Active Directory is found on Windows Servers with AD service. It is basically a database of user accounts, computers, printer, file shares, security groups etc. It is the centralized security management tools for Microsoft networking. Objects are organized in trees and a group of trees is a forest.
+
+There are three flavours of AD service:
+
+1. AWS Managed Microsoft AD
+   You create your on AD in AWS to manage user's locally, supports MFA.
+   You create a trust connection with your on-premise AD, this way user's could authenticate against AWS AD or local AD. In this case user's are shared between the two ADs.
+2. AD Connector.
+   Directory Gateway (proxy) to direct to on premise AD. Here user's are solely managed on the on-premise AD.
+3. Simple ID
+   AD compatible managed directory on AWS. It doesn't use Microsoft AD but it is compatible.
+   It cannot be joined with on-premise AD.
+   This is useful when you are creating EC2 instances with Windows and you want to manage them with Simple ID.
 
 ## KMS & Encryption
 
@@ -163,6 +302,54 @@ And another user with ability to encrypt and decrypt but no ability to manage ke
 Create the Key under IAM Keys menu option, while creating you'll be asked about what group can manage and what group can use the keys. This will create a policy and apply it to the key.
 
 Master Key can never leave the KMS, never exported, if you need to own the master key you need to use AWS CloudHSM service instead of KMS.
+
+KMS Keys are bound to regions.
+
+With KMS you are able to fully manage the keys & policies:
+
+- Create.
+- Rotation Policy.
+- Disable.
+- Enable.
+- Able to monitor usage of key using CloudTrail integration.
+
+**Types of Customer Master Keys (CMK)**
+
+- AWS Managed Service Default CMK (free).
+- User creates Key in KMS (\$1 per month).
+- User Keys imported (when you need to use keys outside AWS too, keys must be 256-bit symmetric) (\$1 key/month)
+
+**Cost**
+Besides costs per key above you also have to pay for KMS API calls (\$0.03 / 1000 calls).
+
+**When to use KMS**
+Anytime you need to share sensitive information:
+
+- Database passwords.
+- Credentials to external service.
+- Private key of SSL certificates.
+
+**Limits**
+KMS can only encrypt and decrypt 4KB of data per call (if you need to encrypt more data then you need to use envelope encryption).
+
+```javascript
+You have exceeded the rate at which you may call KMS. Reduce the frequency of your calls.
+(Service: AWSKMS; Status Code: 400; Error Code: ThrottlingException; Request ID: <ID>
+```
+
+Symmetric (AES-256 Keys)
+
+- First offering of KMS, single encryption key that is used to encrypt and decrypt.
+- AWS services that integrate with KMS use Symmetric CMKs (Customer Master Keys).
+- Necessary for envelop encryption.
+- You never get access to the key unencrypted (must call KMS API to use).
+
+Asymmetric (RSA % ECC key pairs)
+
+- Public key for encryption and private key for decryption (aka key pair).
+- Used for Encrypt/Decrypt, or Sign/Verify operations.
+- The public key is downloadable, but you access the Private Key unencrypted.
+- Use case: encryption outside AWS by users who can't call the KMS API.
 
 It integrates with more than 50 AWS services.
 KMS has two APIs:
@@ -184,6 +371,53 @@ aws kms decrypt
 aws kms re-encrypt (re-encrypt takes an already encrypted file, decrypts it on the cloud and re-encrypts it, this way non-encrypted text never has to transmit across the internet)
 aws kms enable-key-rotation
 
+**To access KMS**
+Make sure key policy allows access.
+Make sure IAM policy allows for KMS API call.
+
+**KSM Keys Policies**
+Control access to keys, similar to S3 bucket policies.
+You cannot control access without them, you must have a KMS key policy to allow access to it always.
+Because of that the default KMS policy is very permissive.
+
+- It is created by default if you don't specify a policy.
+- It gives complete access to the key to the root user which means entire AWS account access.
+- So if a key has the default policy and you need to give access to a user, you just need a IAM policy to give the user access to KMS.
+
+If you define a Custom KMS Policy:
+
+- You need to define which users/roles that can access the KMS key.
+- You need to define who manages the key.
+- Useful for cross-account access to your KMS key.
+
+**Copying encrypted volumes across regions**
+Because KMS keys are region restricted, if you need to move an encrypted volume, let's say EBS, to a different region, you create a snapshot of the volume, which will be encrypted and then copy to the new region specifying the new key that should be used to encrypt it. Then from the new snapshot you create a new volume.
+
+**Copying encrypted snapshots across accounts**
+
+- You have an encrypted snapshot which is encrypted with KMS.
+- Attach a KMS key policy to authorize cross-account access.
+- Share the encrypted snapshot.
+- In the target account create a copy of the snapshot, encrypt it with a KMS key available in your account.
+
+```json
+{
+  "Sid": "Allow an external account to use this CMK",
+  "Effect": "Allow",
+  "Principal": {
+    "AWS": ["arn:aws:iam::TARGET_ACCOUNT:root"]
+  },
+  "Action": ["kms:Decrypt", "kms:createGrant"],
+  "Resource": "*",
+  "Conditions": {
+    "StringEquals": {
+      "kms:ViaService": "ec2.REGION.amazonaws.com",
+      "kms:CallerAccount": "TARGET-ACCOUNT-ID"
+    }
+  }
+}
+```
+
 **Envelop Encryption**
 Envelop encryption is the process of encrypting your keys.
 A master key is used to encrypt the data key (AKA envelop key) and the data key is used to encrypt the data.
@@ -198,29 +432,252 @@ Encryption Keys are regional (keys have to be in the same AZ region they are use
 Learn the API calls (most questions are here).
 To delete a key you have first to disable it, then schedule for deletion with a waiting period between 7 and 30 days.
 
-## System Management Parameter Store
+## SSM (System Management Parameter Store)
 
 Provides secure, hierarchical storage for configuration data management and secrets management. You can store data such as passwords, database strings, Amazon Machine Image (AMI) IDs, and license codes as parameter values. You can store values as plain text or encrypted data. You can reference Systems Manager parameters in your scripts, commands, SSM documents, and configuration and automation workflows by using the unique name that you specified when you created the parameter.
 
 You can create a parameter as:
 String, String List and Secure String (which is encrypted using AWS KMS).
 
+**features**
+
+- Secure Storage for configuration and secrets.
+- Optional encryption with KMS.
+- Serverless, scalable durable and SDK.
+- Version tracking of configuration adn secrets.
+- Configuration management is done using path and IAM.
+- Notifications with CloudWatch events.
+- Integration with CloudFront.
+
+**Example of how parameters are stored hierarchically**
+
+```
+/my-department/
+  my-app/
+    dev/
+      db-url
+      db-password
+    prod/
+      db-url
+      db-password
+  ...
+...
+```
+
+Then when referring a parameter you use a folder structure like: `/my-department/my-app/prod/db-url`
+
+**Standard vs Advanced Tiers**
+Total number of parameters: 10K vs 100K.
+Max size of parameter value: 4k vs 8K.
+Parameter policy available: no vs yes.
+Cost: free vs charges apply.
+Storage price: free vs \$0.05 per advanced parameter per month.
+API interaction price: Standard throughput (free) + higher throughput ($0.05 per 10K calls) vs Standard throughput ($0.05 per 10K calls) + higher throughput (\$0.05 per 10K calls).
+
+**Parameters Policies**
+Allow to assign a TTL to a parameter to force updating or deleting sensitive data such as passwords.
+Allow to delete a parameter
+
+Some examples:
+
+```json
+{
+  "Type": "Expiration",
+  "Version": "1.0",
+  "Attributes": {
+    "Timestamp": "2020-12-02T21:34:33.000Z"
+  }
+}
+
+{
+  "Type": "ExpirationNotification", // this would trigger a cloud watch event
+  "Version": "1.0",
+  "Attributes": {
+    "Before": "15",
+    "Unit": "Days"
+  }
+}
+
+{
+  "Type": "NoChangeNotification", // this would trigger a cloud watch event
+  "Version": "1.0",
+  "Attributes": {
+    "After": "20",
+    "Unit": "Days"
+  }
+}
+```
+
+**Getting parameters with CLI**
+Return the specific parameters.
+`aws ssm get-parameters --name /my-app/dev/db-url /my-app/dev/db-password --with-decryption`
+Returns all parameters under a path.
+`aws ssm get-parameters-by-path --path /my-app/dev --with-decryption`
+Returns all parameters under a path recursively.
+`aws ssm get-parameters-by-path --path /my-app/ --with-decryption --recursive`
+
+`--with-decryption`: will decrypt any encrypted parameter and return it in plain text.
+
+## Secrets Manager
+
+Newer service meant for storing secrets.
+Capability to force rotation of secrets every X days.
+Automate generation of secrets on rotation (uses Lambda).
+Integration with RDS to synchronize secrets between database and Secret Manager.
+Secrets are encrypted using KMS.
+
+## Cloud HSM
+
+HSM = Hardware Security Module.
+AWS provisions the hardware and you manage your own encryption keys entirely.
+Mater keys never leave the hardware.
+Hardware is tamper resistant.
+CloudHSM clusters are spread across AZs but you must set this up.
+Supports both symmetric and asymmetric encryption (SSL/TLS keys).
+Must use the CloudHSM client software.
+Redshift supports CloudHSM for database encryption and key management.
+AWS cannot recover your keys if you loose the hardware credentials.
+
 ## AWS WAF
+
+Protects you Web application from common layer 7 (HTTP) exploits.
+You can deploy it on ALB, API Gateway and CloudFront.
 
 AWS WAF is a web application firewall that helps protect your web applications or APIs against common web exploits that may affect availability, compromise security, or consume excessive resources. AWS WAF gives you control over how traffic reaches your applications by enabling you to create security rules that block common attack patterns, such as SQL injection or cross-site scripting, and rules that filter out specific traffic patterns you define. You can get started quickly using Managed Rules for AWS WAF, a pre-configured set of rules managed by AWS or AWS Marketplace Sellers. The Managed Rules for WAF address issues like the OWASP Top 10 security risks. These rules are regularly updated as new issues emerge. AWS WAF includes a full-featured API that you can use to automate the creation, deployment, and maintenance of security rules.
 With AWS WAF, you pay only for what you use. The pricing is based on how many rules you deploy and how many web requests your application receives. There are no upfront commitments.
 You can deploy AWS WAF on Amazon CloudFront as part of your CDN solution, the Application Load Balancer that fronts your web servers or origin servers running on EC2, or Amazon API Gateway for your APIs.
-**Web traffic filtering**
-Filter web traffic based on conditions that include IP addresses, HTTP headers and body, or custom URIs.
+
+**Web ACL for Rules**
+Rules can include IP addresses, HTTP headers and body, or custom URIs.
+Also Rate-based rules for DDoS protection.
+Also geo-match and size constraints.
 
 ## AWS Shield
 
-AWS Shield is a managed Distributed Denial of Service (DDoS) protection service that safeguards applications running on AWS. AWS Shield provides always-on detection and automatic inline mitigations that minimize application downtime and latency, so there is no need to engage AWS Support to benefit from DDoS protection. There are two tiers of AWS Shield - Standard and Advanced.
+AWS Shield is a managed Distributed Denial of Service (DDoS) protection service that safeguards applications running on AWS. AWS Shield provides always-on detection and automatic inline mitigation that minimize application downtime and latency, so there is no need to engage AWS Support to benefit from DDoS protection. There are two tiers of AWS Shield - Standard and Advanced.
+
+Deploy to ALB, CLB, Elastic IP, CloudFront.
+
+**Standard**
+Free Service that is activated for every AWS customer.
+Provides protection from attacks as SYN/UDP Floods, Reflection Attacks and other layer 3/layer 4 attacks.
+
+**Advanced**
+Optional DDoS mitigation service (\$3K per month per organization).
+Protect against more sophisticated attack on EC2, ELB, CloudFront, AWS Global Accelerator and Route 53.
+24/7 access to AWS DDoS response team (DRP).
+Protects against higher fees during usage spikes due to DDoS.
+
+## AWS Firewall Manager
+
+To manage rules in all accounts of an AWs Organizations.
+Useful o specify common set of security rules.
+WAF rules (ALB, API Gateway and CloudFront).
+AWS Shield Advanced rules (ALB, CLB, Elastic IP, CloudFront).
+Security Groups for EC2 and ENI resources in VPC.
+
+<img src="assets/ddos-mitigation.png" width="500px">
 
 ## Amazon Macie
 
 Amazon Macie is a fully managed data security and data privacy service that uses machine learning and pattern matching to discover and protect your sensitive data in AWS.
 Macie automatically provides an inventory of Amazon S3 buckets including a list of unencrypted buckets, publicly accessible buckets, and buckets shared with AWS accounts outside those you have defined in AWS Organizations. Then, Macie applies machine learning and pattern matching techniques to the buckets you select to identify and alert you to sensitive data, such as personally identifiable information (PII). Macie’s alerts, or findings, can be searched and filtered in the AWS Management Console and sent to Amazon CloudWatch Events for easy integration with existing workflow or event management systems, or to be used in combination with AWS services, such as AWS Step Functions to take automated remediation actions. This can help you meet regulations, such as the Health Insurance Portability and Accountability Act (HIPAA) and General Data Privacy Regulation (GDPR). You can get started with Amazon Macie with a few clicks in the AWS Management Console.
+
+## STS (Security Token Service)
+
+AWS Security Token Service (AWS STS) is a web service that enables you to request temporary, limited-privilege credentials for AWS Identity and Access Management (IAM) users or for users that you authenticate (federated users).
+Tokens are valid for up to 1 hour.
+STS exposes loads o APIs being the most important:
+`AssumeRole`: Returns a set of temporary security credentials that you can use to access AWS resources that you might not normally have access to. These temporary credentials consist of an access key ID, a secret access key, and a security token. Typically, you use AssumeRole within your account or for cross-account access.
+By default, the temporary security credentials created by AssumeRole last for one hour. However, you can use the optional DurationSeconds parameter to specify the duration of your session. You can provide a value from 900 seconds (15 minutes) up to the maximum session duration setting for the role. This setting can have a value from 1 hour to 12 hours.
+`AssumeRoleWithSAML`: Return credentials when users logged with SAML (Security Assertion Markup Language is an open standard for exchanging authentication and authorization data between parties, in particular, between an identity provider and a service provider).
+`AssumeRoleWithWebIdentity`: Returns a set of temporary security credentials for users who have been authenticated in a mobile or web application with a web identity provider. Example providers include Amazon Cognito, Login with Amazon, Facebook, Google, or any OpenID Connect-compatible identity provider. (AWS recommends against using this and instead use Cognito).
+`GetSessionToken`: Returns a set of temporary credentials for an AWS account or IAM user. The credentials consist of an access key ID, a secret access key, and a security token. Typically, you use GetSessionToken if you want to use MFA to protect programmatic calls to specific AWS API operations like Amazon EC2 StopInstances. MFA-enabled IAM users would need to call GetSessionToken and submit an MFA code that is associated with their MFA device.
+
+**How to AssumeRole**
+
+1. Define a IAM Role within your account or cross-account.
+2. Define which principal can access this IAM role.
+3. Use AWS STS to retrieve credentials and impersonate the IAM Role you have access to (AssumeRole API).
+   Temporary credentials will be valid between 15 minutes to 1 hour.
+
+Other APIs: `DecodeAuthorizationMessage`, `GetAccessKeyInfo`, `GetCallerIdentity`, `GetFederationToken`.
+
+## AWS Organizations
+
+AWS Organizations helps you centrally govern your environment as you grow and scale your workloads on AWS. Using AWS Organizations, you can automate account creation, create groups of accounts to reflect your business needs, and apply policies for these groups for governance. You can also simplify billing by setting up a single payment method for all of your AWS accounts. Through integrations with other AWS services, you can use Organizations to define central configurations and resource sharing across accounts in your organization. AWS Organizations is available to all AWS customers at no additional charge.
+
+- Centrally manage policies across multiple AWS accounts
+- Govern access to AWS services, resources, and regions
+- Automate AWS account creation and management
+- Configure AWS services across multiple accounts
+- Consolidate billing across multiple AWS accounts
+
+Having multiple accounts allow for different strategies and security across the whole organization. For example you could have an account per department, or per environment (dev, prod). With organizations security is increased because of the account isolation managed by AWS. You can also have different budget strategies etc.
+You can configure CloudTrail and CloudWatch to send logs to a central S3 to facilitate management and analysis.
+
+**Organization Unit**
+Accounts are organized in Organization Units. Each OU can have multiple accounts and other OU under it.
+
+**Service Control Policies (SCP)**
+You can apply permission guardrails on accounts to control which services, actions, and resources can be accessed across accounts in your organization. For example you could disallow public S3 buckets across all Organization Units.
+SCPs can be applied at the OU or Account level. When applied to an OU it is applied to all Users and Roles on that organization, including Root account. It will not be applied to Serviced-linked roles.
+SCP must have an explicit Allow (it does not allow anything by default).
+SCP never applied to the Master Account.
+SCPs are inherited across the Organization tree.
+
+Explicit Denies override allows (as per expected IAM behavior).
+Let's say we have SCP on a OU level with an explicit deny which restricts the OU to use S3, then we have another SCP applied the Root account of the same OU allowing the use of S3. The account won't be able to use S3 because ANY explicit Deny has priority on the IAM evaluation.
+
+Example use cases:
+
+- Disallow public S3 buckets across all Organization Units.
+- Disable services that are not PCI compliance.
+
+**Service-Linked Roles**
+Service-linked roles are predefined IAM permissions that allow AWS SSO to delegate and enforce which users have SSO access to specific AWS accounts in your organization in AWS Organizations. The service enables this functionality by provisioning a service-linked role in every AWS account within its organization.
+
+**Migrating Accounts**
+
+1. Remove the member account from the old OU.
+2. Send an invite to the new OU.
+3. Accept the invite for te new OU.
+
+To migrate the root account of an OU.
+
+1. Migrate or remove all accounts ont hat OU.
+2. Delete the organization.
+3. Migrate the account as shown above.
+
+NOTES:
+Global Service.
+The main account is the master account - this cannot be changed.
+Other accounts are member accounts.
+Member accounts can only be part of one organization (they can be migrated).
+Pricing benefits from aggregated usage (volume discount for EC2, S3 etc) is on an organization level.
+
+## RAM (AWS Resource Access Manager)
+
+AWS Resource Access Manager (RAM) is a service that enables you to easily and securely share AWS resources with any AWS account or within your AWS Organization. You can share AWS Transit Gateways, Subnets, AWS License Manager configurations, and Amazon Route 53 Resolver rules resources with RAM.
+Many organizations use multiple accounts to create administrative or billing isolation, and to limit the impact of errors. RAM eliminates the need to create duplicate resources in multiple accounts, reducing the operational overhead of managing those resources in every single account you own. You can create resources centrally in a multi-account environment, and use RAM to share those resources across accounts in three simple steps: create a Resource Share, specify resources, and specify accounts. RAM is available to you at no additional charge.
+
+**Shareable Resources**
+Amazon VPC
+AWS App Mesh
+Amazon Aurora
+AWS Certificate Manager Private Certificate Authority
+AWS CodeBuild
+Amazon EC2
+Amazon EC2 Image Builder
+AWS Glue
+AWS License Manager
+AWS Resource Groups
+Amazon Route 53
+
+Some use cases:
+Share VPC subnets to allow all organizations to put their services together in the same subnets. With this users won't share security groups or default VPC, participants are able to manage their own resources and they will not be able to view, modify and delete resources that belong to other participants (although their services might be able to consume other services if allowed by other participants security policies).
+
+# Networking
 
 ## VPC
 
@@ -739,7 +1196,7 @@ AWS Step Functions is a serverless function orchestrator that makes it easy to s
 **Amazon States Language**
 The Amazon States Language is a JSON-based, structured language used to define your state machine, a collection of states, that can do work (Task states), determine which states to transition to next (Choice states), stop an execution with an error (Fail states), and so on.
 
-```
+```json
 {
   "Comment": "An example of the Amazon States Language using a choice state.",
   "StartAt": "FirstState",
@@ -750,7 +1207,7 @@ The Amazon States Language is a JSON-based, structured language used to define y
       "Next": "ChoiceState"
     },
     "ChoiceState": {
-      "Type" : "Choice",
+      "Type": "Choice",
       "Choices": [
         {
           "Variable": "$.foo",
@@ -767,13 +1224,13 @@ The Amazon States Language is a JSON-based, structured language used to define y
     },
 
     "FirstMatchState": {
-      "Type" : "Task",
+      "Type": "Task",
       "Resource": "arn:aws:lambda:us-east-1:123456789012:function:OnFirstMatch",
       "Next": "NextState"
     },
 
     "SecondMatchState": {
-      "Type" : "Task",
+      "Type": "Task",
       "Resource": "arn:aws:lambda:us-east-1:123456789012:function:OnSecondMatch",
       "Next": "NextState"
     },
@@ -1980,7 +2437,7 @@ If during the creation phase any resource in the stack cannot be created, CloudF
 
 Template Structure:
 
-```
+```json
 {
   "AWSTemplateFormatVersion" : "version date",
 
@@ -2028,7 +2485,7 @@ Use the SAM CLI to package your deployment code, upload it to S3 and deploy your
 
 Example:
 
-```
+```json
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31  // => This is what tell CloudFormation that this is a SAM application
 Resources:
@@ -2149,6 +2606,55 @@ Remember the languages it supports.
 
 Amazon CloudWatch is a monitoring and observability service built for DevOps engineers, developers, site reliability engineers (SREs), and IT managers. CloudWatch provides you with data and actionable insights to monitor your applications, respond to system-wide performance changes, optimize resource utilization, and get a unified view of operational health. CloudWatch collects monitoring and operational data in the form of logs, metrics, and events, providing you with a unified view of AWS resources, applications, and services that run on AWS and on-premises servers.
 
+**Metrics**
+CloudWatch provides metrics for every service in AWS.
+A Metric is a variable to monitor, such as CPU, NetworkIn etc.
+Metrics belong to namespaces.
+Dimension is an attribute of a metric (instance id, environment etc).
+A metric can have up to 10 dimensions.
+Metrics have timestap.
+We can create CloudWatch Dashboards of metrics.
+Metrics resolution is 1 minute but we can set higher resolution up to 1 second (higher cost).
+To send a metric to CloudWatch we use the PutMetricData API call.
+Use exponetial backoff in case of throttle errors.
+
+**Logs**
+Applications can send logs to CloudWatch using the SDK.
+CloudWatch can collect logs from: Beanstalk, ECS, Lambda, VPC flow logs, API Gateway, CloudTrail (based on filter), CloudWatch logs agents (for example on EC2), Route53 logs DNS queries.
+Then CloudWatch can send the logs to many places, such as S3 for archival, to ElasticSearch for analytics etc.
+
+Logs storage archtecture:
+Log groups: arbitrary name, usually representing an application or service.
+Log streams: Whithin a log group you can have many streams, streams is where you apllication/services will send their logs.
+Log expiration policies: You pay for the logs retention and policies allow you to expire logs so they are deleted. For example have a policy that moves the logs to S3 after 30 days and expire them.
+Using the CLI you can tail CloudWatch logs.
+IAM permisions must be configured to allow services to send logs to CludWatch.
+Logs can be encrypted using KMS.
+
+CloudWatch logs can use filter expressions and metrics filters can be used to trigger alarms.
+CloudWatch lohs insights can be used to query logs and add queries to CloudWatch Dashboards.
+
+**Dashbards**
+Dashboards are global.
+Dashboard can include graphs from different regions.
+You can set Dashboard refresh to 10s, 1m, 2m, 5m, 15m.
+Price: 3 dashboards (up to 50 metrics) for free then 3\$ per dashboard per month.
+
+**CloudWatch Alarms**
+Alarms are used to trigger notifications for any metric.
+Alarms can go to ASG, EC2 Actions, SNS Notifications.
+Alarms can be in 3 states: OK, INSUFFICIENT_DATA and ALARM
+You specify the period to evaluate a metric and if you use a high resolution custom metric you can use 10 sec or 30 sec.
+
+**CloudWatch Events**
+Amazon CloudWatch Events delivers a near real-time stream of system events that describe changes in Amazon Web Services (AWS) resources. Using simple rules that you can quickly set up, you can match events and route them to one or more target functions or streams.
+
+Event Pattern: Event rules to react to a service doing something. e.g: CodePipeline State changes.
+Cron Jobs: You can also use CloudWatch Events to schedule automated actions that self-trigger at certain times using cron or rate expressions.
+
+Event can send messages to many targets such as Lambda, SQS, SNS, Kinesis etc.
+CloudWatch events create a small JSON document ot give information about the change.
+
 **Monitoring EC2**
 By default CloudWatch monitors the following properties:
 
@@ -2157,9 +2663,16 @@ By default CloudWatch monitors the following properties:
 3. Disk
 4. Status Check (health of EC2 instance and EC2 host).
 
+Colelcting logs:
+By default EC2 instance won't send logs to CloudWatch, for that we need to install and run CloudWatch agent on the instances. Make sure IAM permisions allow the instances to send logs to CloudWatch.
+CloudWatch agent sends both logs and other metrics such as memory usage.
+
 1, 2, 3 are called Host Level Metrics.
 
 CloudWatch logs are stored the data indefinitely by default but you can customize the retention period for each Log Group at a time.
+By default EC2 monitoring is 5 minutes interval and you can enable detailed monitoring for 1 minute interval, having faster auto scaling responses.
+AWS Free Tier allows for 10 detailed monitoring metric.
+Memory usage must be a custom metric, you can install CloudWatch agent in your instance which report memory by default.
 
 NOTES:
 Ram utilization is a custom metric.
@@ -2185,6 +2698,24 @@ Planning data center migrations can involve thousands of workloads that are ofte
 The collected data is retained in encrypted format in an AWS Application Discovery Service data store. You can export this data as a CSV file and use it to estimate the Total Cost of Ownership (TCO) of running on AWS and to plan your migration to AWS. In addition, this data is also available in AWS Migration Hub, where you can migrate the discovered servers and track their progress as they get migrated to AWS.
 
 # Other
+
+## AWS Config
+
+AWS Config is a service that enables you to assess, audit, and evaluate the configurations of your AWS resources. Config continuously monitors and records your AWS resource configurations and allows you to automate the evaluation of recorded configurations against desired configurations. With Config, you can review changes in configurations and relationships between AWS resources, dive into detailed resource configuration histories, and determine your overall compliance against the configurations specified in your internal guidelines. This enables you to simplify compliance auditing, security analysis, change management, and operational troubleshooting.
+
+**Config Rules**
+We can use AWS managed config rules (over 80 rules).
+Or we can create custom config rules (must be defined in AWS Lambda). e.g: Evaluate if all instances are t2.micro or if all security groups expose no SSH to 0.0.0./0
+
+Rules are evaluated or triggered:
+
+1. for each config change.
+2. and/or at regular time intervals.
+
+You can trigger CloudWatch Events if the rule is non-compliant (and chain with Lambda).
+Rules can have auto-remediation setting, so if a change happened and shound't you can configure a way to remediate it. e.g: block any public bucket.
+
+Price: You pay \$0.003 per configuration item recorded in your AWS account per AWS Region.
 
 ## AWS CLI
 
