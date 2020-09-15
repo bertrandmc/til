@@ -685,6 +685,30 @@ Amazon Virtual Private Cloud (Amazon VPC) lets you provision a logically isolate
 
 There are no additional charges for creating and using the VPC itself. Usage charges for other Amazon Web Services.
 
+Limits:
+By default we can have up to 5 VPCs per region, but this can be extended by contacting AWS.
+Each VPC can have up to 5 CIDR.
+For each CIDR the minimum size is /28 = 16 IPs.
+For each CIRD the maximum size is /16 = 65536 IPs.
+
+In a private VPC only private IPs are allowed.
+When creating a new VPC make sure the CIDR do not overlap your corporate network to avoid conflicts when connecting networks.
+
+**Subnets**
+A VPC can have Private or Public subnets.
+When creating a subnet we specify:
+
+1. The VPC it is associated with.
+2. The Availability Zone (subnets are tied to specific AZ).
+3. The IPv4 CIDR block.
+
+In a subnet 5 IP addresses are reserved and cannot be used (first 4 and last IPs).
+IP 1 is for the network address.
+IP 2 is for the VPC router.
+IP 3 is for mapping to AWS provided DNS.
+IP 4 is reserved for future use.
+IP last if for network broadcast.
+
 **Components of Amazon VPC?**
 Amazon VPC comprises a variety of objects that will be familiar to customers with existing networks:
 
@@ -705,10 +729,78 @@ Internet Gateway, VPN, Network Address Translation (NAT) devices, or firewall pr
 
 `Egress-only Internet Gateway`: A stateful gateway to provide egress only access for IPv6 traffic from the VPC to the Internet.
 
+**Internet Gateway**
+Used to connect VPCs to the internet.
+It scales horizontally and is Hight Available and redundant.
+Must be created separately from VPC and then attached.
+a VPC can only be attached to one IGW and vice versa.
+IGW is also a NAT for the instances that have a public IPv4.
+On their on IGW do not allow internet access and for that we need to edit the subnet's route table.
+
+**Egress Only Internet Gateway**
+Egress = out-going.
+Only for IPv6.
+Similar as a NAT but for IPv6.
+Used to allow IPv6 instances to access the internet while not being publicly accessible.
+IPv6 has no Private Range like IPv4, and so all IPv6 instances have public address. If you don't want them to be public accessible but need them to access the internet then Egress Only Internet Gateway is used to allow it.
+After creating the Egress Only Internet Gateway you need to edit the subnets route tables (::/0 target eigw).
+
+**Route Tables**
+By default AWS creates a main route table, best practice is not to use it and instead create separate route tables for the subnets. Once a route table is created than it can be associated with subnets.
+For example let's say you have created a new VPC with two public subnets, you have attached a IGW and not you create a new route table and attach them to these subnets, next step is to add the route for the internet, saying that destination 0.0.0/0 will target the IGW. With this instances inside the VPC can now connect to the internet.
+
+**NAT**
+Instances in a Public subnet with IGW and route properly configured have access to the internet and can be accessed from the internet, for private subnets we need NAT to allow the instances to access internet while not being accessible from the internet.
+AWs has two types of NATs:
+
+1. NAT Gateways.
+   - AWS managed NAT, higher bandwidth, better availability, no admin (compared to NAT instance).
+   - Pay per hour of usage and bandwidth.
+   - NAT is created in a specific AZ and uses EIP.
+   - It cannot be used by instances in the same subnet, only instances from other subnets.
+   - Requires an Internet Gateway (Private Subnet => NAT => IGT => Internet).
+   - %GB of bandwidth with auto scaling to 45GB.
+   - No need to manage Security Group.
+   - NAT Gateway is resilient only in a single AZ, For High Availability across AZs a NAT Gateway must be created in each AZs.
+2. Nat Instances (obsolete not recommended).
+   - Allow instances in the private subnet to connect to the internet.
+   - Must be launched in a public subnet.
+   - Must disable EC@ flag: Source / Destination Check.
+   - Must attach an elastic IP to it.
+   - The route table must be configured to route traffic from the private subnet to the NAT instance.
+   - The EC@ instance Security Group must allow HTTP and HTTPS.
+   - This solution doesn't scale and is not Highly Available unless the nat service is behind ELB + ASG and management is harder when compared to NAT Gateways.
+
+**DNS Resolution on VPC**
+`enableDnsSupport`: DNS resolution setting.
+Default true.
+Helps decide if DNS resolution is supported for the VPC.
+If True, queries the AWS DNS server at 169.254.169.243.
+`enableDnsHostname`: DNS hostname setting.
+Default false for newly created VPCs, true by default on Default VPC.
+If True, Assign public hostnames to EC2 instances.
+
+Route53: If you use custom DNS domain names in a private Zone in Route 53 you must set both attributes to true.
+
 **VPC Security**
 Amazon EC2 security groups can be used to help secure instances within an Amazon VPC. Security groups in a VPC enable you to specify both inbound and outbound network traffic that is allowed to or from each Amazon EC2 instance. Traffic which is not explicitly allowed to or from an instance is automatically denied.
 
 In addition to security groups, network traffic entering and exiting each subnet can be allowed or denied via network Access Control Lists (ACLs).
+
+**Network ACLs**
+NACL are like a firewall which control traffic from and to subnet.
+Default NACL allows everything outbound and inbound.
+One NACL per subnet, new subnets are assigned the default ACL.
+
+To define NACL rules:
+
+1. Rules have a number (1 - 32766) and higher precedence with a lower number. Rules are evaluate from 1 to last and whenever a rule allows or denys the evaluation stops and rule is applied. e.g: Rule 100 allows IP, Rule 200 Deny => IP is allowed.
+2. Last rule is "\*"
+3. AWs recommends adding rule in steps of 100, in case you need to add more rules in between in the future.
+4. Newly create NACL will deny everything.
+5. NACL are a great way of blocking a specific IP at the subnet level.
+
+Remember that ephemeral ports outbound must be allowed so the communication is able to reach the requet client in the port their system has started the communication. An ephemeral port is a short-lived transport protocol port for Internet Protocol (IP) communications. Ephemeral ports are allocated automatically from a predefined range by the IP stack software. In practice, to cover the different types of clients that might initiate traffic to public-facing instances in your VPC, you can open ephemeral ports 1024-65535.
 
 **Differences between Security Groups and network ACLs in a VPC**
 Security groups in a VPC specify which traffic is allowed to or from an Amazon EC2 instance. Network ACLs operate at the subnet level and evaluate traffic entering and exiting a subnet. Network ACLs can be used to set both Allow and Deny rules. Network ACLs do not filter traffic between instances in the same subnet. In addition, network ACLs perform stateless filtering while security groups perform stateful filtering.
@@ -717,9 +809,155 @@ Stateful filtering tracks the origin of a request and can automatically allow th
 
 Stateless filtering, on the other hand, only examines the source or destination IP address and the destination port, ignoring whether the traffic is a new request or a reply to a request. In the above example, two rules would need to be implemented on the filtering device: one rule to allow traffic inbound to the web server on TCP port 80, and another rule to allow outbound traffic from the webserver (TCP port range 49, 152 through 65, 535).
 
-Remember:
-Security Groups are stateful firewalls.
-ACLs: Are stateless network filters.
+Evaluation Order when request comes from outside:
+Inbound request => ACL evaluate inbound rules (subnet level) => Security Group evaluate inbound rules => EC2 responds => Security Group allow outbound of an inbound traffic by default (stateful) => ACL evaluate outbound rules (stateless) => request is out.
+
+Evaluation Order when request starts from instance:
+Security Groups evaluates outbound rules => ACL evaluate outbound rules => outside responds => ACL inbound rules are evaluated (stateless) => Security Group allow inbound traffic (stateful).
+
+**CIDR - IPv4**
+CIRD (Classless Inter-Domain Routing) are used for Security Groups rules or AWS networking in general.
+They help define IP address range.
+192.168.0.0/26 = 64 IPS (32 - 26 = 6 = 2 ^ 6 = 64 IPs).
+
+Private IPv4 addresses:
+24-bit block 10.0.0.0 – 10.255.255.255 single class A network (very large networks)
+20-bit block 172.16.0.0 – 172.31.255.255 16 contiguous class B networks (default used by AWS)
+16-bit block 192.168.0.0 – 192.168.255.255 256 contiguous class C networks
+
+All other IP ranges are Public.
+
+**Default VPC**
+All new accounts have a default VPC.
+New instances are launched into the default VPC if no subnet is specified.
+When AWS creates a default VPC the following to set it up for you:
+
+1. Create a VPC with a size /16 IPv4 CIDR block (172.31.0.0/16). This provides up to 65,536 private IPv4 addresses.
+2. Create a size /20 default subnet in each Availability Zone. This provides up to 4,096 addresses per subnet, a few of which are reserved for our use.
+3. Create an internet gateway and connect it to your default VPC.
+4. Create a default security group and associate it with your default VPC.
+5. Create a default network access control list (ACL) and associate it with your default VPC.
+6. Associate the default DHCP options set for your AWS account with your default VPC.
+
+Instances that you launch into a default subnet receive both a public IPv4 address and a private IPv4 address, and both public and private DNS hostnames.
+
+**VPC Flow Logs and Athena**
+Flow logs help you capture information about IP traffic going into your interfaces.
+There are three kinds of flow logs:
+
+1. VPC Flow Logs.
+2. Subnet Flow Logs.
+3. Elastic Network Interface Flow Logs.
+
+Helps to monitor & troubleshoot connectivity issues.
+Flow Logs data can go direct to S3 or CloudWatch logs.
+When you enable it it will also capture all network information from AWS managed interfaces such as ELB, RDS, ElastiCache, Redshift, Workspace.
+
+Flow log syntax:
+`<version> <account-id> <interface-id> <srcaddr> <dstaddr> <srcport> <dstport> <protocol> <packets> <bytes> <start> <end> <action> <log-status>`
+
+srcaddr, dstaddr: help identity problematic IPs.
+srcport, dstport: help identify problematic Ports.
+action: success or failure of the request due to Security Group / ACL rules.
+
+Logs are also useful for analytics on usage patterns, or malicious behavior.
+Tools to query Flow Logs are Athena and CloudWatch Logs Insights.
+
+**Bastion Hosts**
+Hosts which are placed in a public subnet. Usually used to give access to private instances or expose private services. A Bastion host must have a security group very strict.
+A bastion host is a special-purpose computer on a network specifically designed and configured to withstand attacks. The computer generally hosts a single application, for example a proxy server, and all other services are removed or limited to reduce the threat to the computer.
+E.g: A Bastion Host which is used to allow SSH to private instances for a specif ID. In The Security Group make sure only port 22 is allowed and from the specific IP address.
+The best practice is to use the ssh-agent forwarding instead of storing the target machine's private key on the bastion host. You must use the ssh-agent forwarding even if you are using the same key-pair for both bastion and target instances.
+
+**VPC Peering**
+Connects two VPCs privately using AWS network making them behave as if they were in the same network.
+Obviously there can't be overlapping CIDR.
+If VPC-A is connected to VPB and VPC-B is connected to VPC-C, VPC-A and VPC-C are not connected because VPC Peering connections are not transitive.
+VPC Peering can be established between different accounts.
+VPC Peering works inter-region and cross-account.
+IMPORTANT: When Peering a VPC, for each subnet we want to communicate, we need to update the route tables in each subnet to ensure instances can communicate.
+You can reference a security group of a peered VPC. For example if in your VPC peered you want to allow just port 80 access from the peered VPC.
+
+**VPC PrivateLink (AKA VPC Endpoint Services)**
+This is an alternative to VPC Peering, most secured and scalable to expose a service to 1000s of VPCs (own or other accounts).
+The solution does not required VPc Peering, IGW, Nat, Route Tables etc.
+The VPC PrivateLink will link a load balancer in one VPC to a Elastic Network Interface in another VPC.
+
+**VPC Endpoints**
+A VPC endpoint enables you to privately connect your VPC to supported AWS services and VPC endpoint services powered by AWS PrivateLink without requiring an internet gateway, NAT device, VPN connection, or AWS Direct Connect connection.
+VPC Endpoints scale horizontally and are redundant.
+
+Two kinds of endpoints:
+
+1. `Interface`: Provisions an ENI (private IP address) as an entry point (must attach security group) - connects to most AWS services.
+2. `Gateway`: Provisions a target and must be used in a route table. Needed for S3 and DynamoDB.
+
+In case of issues:
+
+- Check DNS setting resolution in you VPC.
+- Check route tables (if using Gateway).
+- When using Interface, to use private DNS names, make sure `enableDnsSupport` and `enableDnsHostname` are enabled.
+
+IMPORTANT: Once a VPC endpoint is configured and you want to run AWS CLI commands, make sure you run the command specifying the right region, by default AWS CLI will run on us-east-1 and if your VPC Endpoint was configured for another region the command will fail. e.b: `aws s3 ls --region eu-west-1`.
+
+<img src="assets/vpc-endpoint-s3-diagram.png" width="500px">
+
+**Virtual Private Gateway (VGW)**
+It is a VPN concentrator on the AWS side of the VPN connection.
+VGW is created and attached to the VPC for which you want to stablish the Site-to-Site VPN connection.
+Possibility to customize the ASN.
+
+**Site-to-Site VPN**
+To connect your on-premise network to AWS VPC.
+
+1. Create a Customer Gateway on the on-premise network.
+2. Create in VPC settings a Customer Gateway with the information about the real Customer Gateway including IP etc. If the customer gateway is behind a NAT you need to use the NAT's IP and the NAT must be a NAT-T
+3. Create a VPN Gateway and attach it to the VPC.
+4. Between the Customer Gateway and the VPN Gateway configure a Site-to-Site VPN connection.
+   1. Choose the Virtual Private Gateway.
+   2. Choose the Customer Gateway.
+   3. For routing option choose dynamic or static.
+5. Download the VPN connection to configure the on-premise VPN/gateway
+
+**Direct Connect**
+A physical connection (network link). Takes around 1 months to be put in place.
+Using AWS Direct Connect, you can establish private connectivity between AWS and your on-premise network, which in many cases can reduce your network costs, increase bandwidth throughput, and provide a more consistent network experience than Internet-based connections.
+Once the link between AWS and on-premise is live then you need to setup a Virtual Private Gateway on your VPC.
+Direct Connect will allow us to access both public resources such as S3 and private (EC2) on the same connection.
+It supports both IPv4 and IPv6.
+
+Two types of connections:
+
+1. Dedicated Connections: 1GB/s or 10GB/s capacity (Physical Ethernet Port dedicated to you).
+   For this you need to first contact AWS, then request the connection with an AWS Direct Connection Partner.
+2. Hosted Connections: 50MB/s, 500MB/s up to 10GB/s.
+   The connection request are made via AWS Direct Connection Partners.
+   Can add or remove capacity on demand.
+
+Date in-transit is not encrypted (although in a private network).
+Combine Direct Connect + VPN to ensure a IPsec-encrypted private connection.
+
+Use cases:
+
+- When you need to increase bandwidth throughput - working with large datasets - could lower costs.
+- Need more consistent networking experience for apps using real-time data feeds.
+- Hybrid environments.
+
+**Direct Connect Gateway**
+In case you want to connect your on-premise network with multiple VPCs (same account but different regions).
+A Direct Connect Gateway is non-transitive, it won't peer the VPCs, for that you still need VPC Peering.
+
+**VPN CloudHub**
+To connect multiple VPN connections and stablish a peering between them. Let's say you hav 3 offices, each office connects to AWs using VPN, you can connect all these VPNs using VPN CloudHub and peering between the offices is established. It is a low cost hub-and-spoke model for primary and secondary network connectivity between locations.
+
+**Transit Gateway**
+Used to simplify complex multi-VPN and peering network topology. For example VPC-A is peering with VPC-B and VPC-B is peering with VPC-C, with this setup VPC-A is not peering with VPC-C unless we add another Peer connection. Now scale this to 100's of VPCs and VPNs.
+Transit Gateway allows you to use a single gateway to connect multiple VPCs and VPNs instead of configuring a direct VPN or Peering connection between each VPC/Gateway.
+It is a regional resource but can be configured cross-region.
+Can be shared across accounts using Resource Access Manager (RAM).
+You can peer Transit Gateways across regions.
+Using the Route Tables defined in the Transit Gateway you can configure which VPN can talk to each other.
+Supports IP Multicast (which is not supported by any other AWS service).
 
 # Compute and Related Storage
 
@@ -1356,6 +1594,35 @@ ECS is a great choice to run containers for several reasons. First, you can choo
 
 Additionally, because ECS has been a foundational pillar for key Amazon services, it can natively integrate with other services such as Amazon Route 53, Secrets Manager, AWS Identity and Access Management (IAM), and Amazon CloudWatch providing you a familiar experience to deploy and scale your containers. ECS is also able to quickly integrate with other AWS services to bring new capabilities to ECS. For example, ECS allows your applications the flexibility to use a mix of Amazon EC2 and AWS Fargate with Spot and On-Demand pricing options. ECS also integrates with AWS App Mesh, which is a service mesh, to bring rich observability, traffic controls and security features to your applications. ECS has grown rapidly since launch and is currently launching 5X more containers every hour than EC2 launches instances.
 
+**ALB + ECS**
+ALB allows for port mapping which integrates really well with ECS. This allows us to run multiple instances of the same applications on the same EC2 machine. This allows:
+
+- To increase resilience in case of app crashes.
+- Maximize utilization of CPU.
+- Ability to perform rolling upgrades without impacting application uptime.
+
+**Manually Install ECS**
+
+1. Run a EC2 instance, install the ECS agent with ECS config file (or use an ECS-ready Linux AMI and adjust the config file).
+
+ECS config file is at `/etc/ecs/ecs.config` with the following options:
+
+```javascript
+ECS_CLUSTER=MyCluster // assign EC2 instance to an ECS cluster
+ECS_ENGINE_AUTH_DATA={...} // to pull images from private registries
+ECS_AVAILABLE_LOGGING_DRIVERS=[...] // Cloudwatch container logging
+ECS_ENABLE_TASK_ROLE=true // Enable IAM roles for ECS tasks
+```
+
+**ECS - IAM Task Roles**
+Let's analyse a use case, we have one EC2 instance running the AppA on Task1, AppB on Task1 and AppA on Task2, and also the ECS agent.
+The EC2 instance should have an IAM role allowing it to access the ECS service so the ECS agent can call the ECS APIs, then each Task must have their own ECS IAM Task role to perform their API calls.
+ECS IAM Task Roles can be assigned for each task, this way if AppA needs access to S£ and AppB needs access to DynamoDB we won't need to give both access to both applications.
+This is defined in the task definition, we have the option `taskRoleArn`.
+
+**Fargate**
+Serverless ECS. AWS provision resources and we just specify the amount of memory and cpu a task needs.
+
 ## ElasticBeansTalk
 
 AWS Elastic Beanstalk is an easy-to-use service for deploying and scaling web applications and services developed with Java, .NET, PHP, Node.js, Python, Ruby, Go, and Docker on familiar servers such as Apache, Nginx, Passenger, and IIS.
@@ -1432,6 +1699,19 @@ When you create a record, you choose a routing policy, which determines how Amaz
 
 NOTES:
 Updated to route may be reflected immediately to your clients if they already cached and waiting for TTL to expire.
+
+**Failover routing**
+Failover routing lets you route traffic to a resource when the resource is healthy or to a different resource when the first resource is unhealthy. The primary and secondary records can route traffic to anything from an Amazon S3 bucket that is configured as a website to a complex tree of records.
+
+**Active-active and active-passive failover**
+You can use Route 53 health checking to configure active-active and active-passive failover configurations.
+You configure active-active failover using any routing policy (or combination of routing policies seen above) other than failover, and you configure active-passive failover using the failover routing policy.
+
+**Active-active failover**
+Use this failover configuration when you want all of your resources to be available the majority of the time. When a resource becomes unavailable, Route 53 can detect that it's unhealthy and stop including it when responding to queries.
+
+**Active-passive failover**
+Use an active-passive failover configuration when you want a primary resource or group of resources to be available the majority of the time and you want a secondary resource or group of resources to be on standby in case all the primary resources become unavailable. When responding to queries, Route 53 includes only the healthy primary resources. If all the primary resources are unhealthy, Route 53 begins to include only the healthy secondary resources in response to DNS queries.
 
 **HealthChecks**
 Unhealthy when 3 checks fail.
@@ -2521,6 +2801,10 @@ Resources:
 
 ```
 
+**CloudFormation StackSets**
+Allows to create, update or delete stacks across multiple accounts and regions with a single operation.
+The administrator creates a StackSet and asign trusted accounts to create, update, delete stack instances from StackSet.
+
 **Parameters and Functions**
 `!GetAtt`: Intrinsic function which returns the value of a parameter of an attribute from a resource in the template. We can use it to get for example, the region ID attribute of the required instance in the resource.
 `Ref`: The intrinsic function Ref returns the value of the specified parameter or resource.
@@ -2699,6 +2983,115 @@ The collected data is retained in encrypted format in an AWS Application Discove
 
 # Other
 
+## Disaster Recovery
+
+Disaster recovery is about preparing for and recovering from a disaster.
+
+**RTO: Recovery Time Objective**
+The time it takes after a disruption to restore a business process to its service level, as defined by the operational level agreement (OLA). For example, if a disaster occurs at 12:00 PM (noon) and the RTO is eight hours, the DR process should restore the business process to the acceptable service level by 8:00 PM.
+
+**RPO: Recovery Point Objective**
+The acceptable amount of data loss measured in time. For example, if a disaster occurs at 12:00 PM (noon) and the RPO is one hour, the system should recover all data that was in the system before 11:00 AM.Data loss will span only one hour, between 11:00 AM and 12:00 PM (noon).
+
+**Disaster Recovery Strategies**
+The faster RTO is the strategy the more expensive it will be because of the required infrastructure, data replication etc.
+
+1. Backup and Restore:
+   Longer RTO.
+   Based on backups, snapshots, EMIs etc. When a disaster strikes backups are use to recreate affected services. This has a higher RTO because infrastructure needs to be put in place and RTO will depend on how often backups were made.
+
+2. Pilot Light:
+   Longer RTO but faster than Backup and Restore.
+   A small secondary version of the critical systems are always running in the cloud. This is faster than Backup and Restore because critical systems are already up and running. To recover is mostly about, failing over to these backups, adding the non-critical systems and scaling up the critical ones.
+
+3. Warm Standby:
+   Second Faster RTO.
+   Fully system is up and running but at minimun size. Upon disaster we fail over and scale up.
+
+4. Hot Site / Multi Site Approach:
+   Faster RTO (minutes or seconds).
+   Full production scale is running in parallel and in case of disaster you just failover.
+
+The above strategies are valid for both On-Site+ Cloud or All Cloud. For all cloud you would have a multi region setup, this way there are multi AZ and multi region resistance to disasters.
+
+**How to prepare?**
+
+1. Backups
+   EBS Snapshots, RDS automated backups / snapshots etc. Push these regularly to S3,S3-IA, LifeCycle Policies to Glacier/Deep, Cross Region Replication.
+   From on-premise, use Snowball and Storage Gateway.
+2. High Availability
+   Route53 to migrate DNS over form Region to Region.
+   RDS Multi-AZ, ElastiCache Multi-AZ, EFS, S3.
+   Site-to-Site VPN as a recovery from Direct Connect.
+3. Replication
+   RDS replication (Cross Region), AWS Aurora + Global Databases.
+   Database replciation from on-premise to RDS.
+   Storage Gateway.
+4. Automation
+   CloudFormation and Elastic Beanstalk to help re-create a whole new environment.
+   Recover / Reboot EC2 instances with CloudWatch (actions) if alarms fail.
+   AWS Lambda functions for customized automations.
+5. Chaos testing
+   Cause failures to validate your recovery stratey. Netflix is an example, they create the Chaos Monkey which randomly terminates EC2 instances in production to constantly evaluate how resilient the infrastructure is.
+
+## Database Migration Service
+
+Quickly and secure way to migrate databases to AWS, resilient and self-healing.
+The source database remains fully operational during the migration, minimizing downtime to applications that rely on the database. The AWS Database Migration Service can migrate your data to and from most widely used commercial and open-source databases.
+Supports:
+Homogenous migrations: e.g: Oracle to Oracle etc.
+Heterogeneous migration: e.g: Microsoft SQL to Aurora etc.
+
+Supports Continuous Data Replication using CDC (Change Data Capture).
+You must create an EC2 instance to perform the replication tasks.
+
+**AWS Schema Convention Tool (SCT)**
+Convert your DB's schemas from one engine to another.
+Example OLTP: SQL Server or Oracle to MySQL, PostgreSQL, Aurora.
+Example OLAP: TeraData or Oracle to Amazon Redshift.
+IMPORTANT: You do not need to use SCT when migrating for the same database engine.
+
+## On-Primise strategy with AWS
+
+1. Ability to download Amazon Linux 2 AMI as a VM (.iso format). They can run on VMWare, KVM, VirtualBox, Microsoft Hyper-V.
+2. VM Import/Export
+   Migrate existing applications into EC2.
+   Create a Disaster Recovery strategy for your on-premise VMs.
+   Can export back the VMs from EC2 to on-premise.
+3. AWS Application Discovery Service
+   Gather information about on-premise server to plan a migration.
+   Server utilization and dependency mapping.
+   Track the migration with AWS Migration Hub.
+4. AWS Database Migration Service
+5. AWS Server Migration Service
+   Incremental replication of on-premise live servers to AWS.
+
+## AWS Data Sync
+
+AWS DataSync makes it simple and fast to move large amounts of data online between on-premises storage and Amazon S3, Amazon Elastic File System (Amazon EFS), or Amazon FSx for Windows File Server.
+Move data from your NAS or file system via NFS or SMB.
+Need to install the AWS DataSync agent on premise so it can monitor your file system and sync data across to AWS.
+Replication can be scheduled to be hourly ,daily and weekly.
+Works for EFS to EFS replication.
+
+**DataSync vs Storage Gateway**
+AWS DataSync is ideal for online data transfers. You can use DataSync to migrate active data to AWS, transfer data to the cloud for analysis and processing, archive data to free up on-premises storage capacity, or replicate data to AWS for business continuity.
+AWS Storage Gateway is a hybrid cloud storage service that gives you on-premises access to virtually unlimited cloud storage.
+
+## HPC (High Performance Computing)
+
+EC2 Enhanced Networking
+
+**Higher bandwidth, higher packages per second, lower latency**
+
+1. Elastic Network Adapter (ENA): up to 100GB/s
+2. Elastic Fabric Adapter (EFA): Improved ENA for HPC, only works on Linux.
+   Great for inter-node (distributed) computation, tightly coupled workloads.
+   It leverages Message Passing Interface (MPI) standard.
+   It bypasses the underlying Linux OS to provide low-latency, reliable transport.
+
+Notes: Learn the difference between ENI and EFA.
+
 ## AWS Config
 
 AWS Config is a service that enables you to assess, audit, and evaluate the configurations of your AWS resources. Config continuously monitors and records your AWS resource configurations and allows you to automate the evaluation of recorded configurations against desired configurations. With Config, you can review changes in configurations and relationships between AWS resources, dive into detailed resource configuration histories, and determine your overall compliance against the configurations specified in your internal guidelines. This enables you to simplify compliance auditing, security analysis, change management, and operational troubleshooting.
@@ -2716,6 +3109,15 @@ You can trigger CloudWatch Events if the rule is non-compliant (and chain with L
 Rules can have auto-remediation setting, so if a change happened and shound't you can configure a way to remediate it. e.g: block any public bucket.
 
 Price: You pay \$0.003 per configuration item recorded in your AWS account per AWS Region.
+
+## AWS Glue
+
+AWS Glue is a fully managed extract, transform, and load (ETL) service that makes it easy for customers to prepare and load their data for analytics.
+Used to move data from various data sources to different data sources, with it you transform data from one format to another.
+Serverless, fully managed (provisions Apache Spark).
+Scheme inference (crawls data sources and identify formats).
+Automated Code Generation.
+Glue Data Catalog: Metadata (definition & schema) of the Source Tables.
 
 ## AWS CLI
 

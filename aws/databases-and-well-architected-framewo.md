@@ -1,5 +1,48 @@
 # Databases and Well-Architected Framework
 
+## Well-Architected Framework
+
+Each pillar has: Design principles, Definition, Best Practices and Key AWS services associated with this pillar and resources.
+
+Design principles :
+
+1. Do not guess your capacity.
+2. Automate your architecture using cloud formation/Chef.
+3. Allow for evolutionary architecture through incremental change (design based on changing requirements).
+4. Improve through testing the system at regular event days (AKA game days).
+5. Test your system at scale of real time production system.
+6. Data driven architecture.
+
+Pillars:
+
+1. Security
+   Data : data at rest and data at transit (encrypt/SSL)
+   Privilege management : root account , defining roles and groups,access to resources and managing keys and credentials.
+   Infrastructure protection:Network and host level boundary, service level protections level protection.
+   Detective control: capturing and monitoring AWS logs.
+
+2. Reliability
+   Foundation : Service limits ,Network topology , handling technical issues.
+   Change Management :adapting the change on demand, monitoring resources,
+   Failure Management : backing up data, component failure and recovery.
+
+3. Performance Efficiency
+   Compute : instance type, post launch instance state, is it meeting your demand
+   Storage :appropriate storage,monitoring, throughput is matching demand.
+   Database :appropriate db,monitoring, throughput is matching demand.
+   Space time trade off : proximity and caching solution, performance is expected.
+
+4. Cost optimization
+   Match supply and Demand : should not exceed your budget,optimize your usage.
+   Cost effective resources : correct resource cost target, pricing model, using managed service to reduce the cost like RDS to DynamoDB etc.
+   Expenditure awareness : usage and spending,decomission resources, data transfer charges, resource getting used for user not active any more .
+   Optimising over time : adopting new services (like Lamda) from was blogs etc.
+
+5. Operational Excellence
+   Preparation : what best practices are getting used, configuration management.
+   Operation: evolving workload with minimizing the impact, monitor workload expectation.
+   Responses :Responding to unplanned events, managing escalation for these events.
+
 ## RDS
 
 `Operations`: small downtime when failover, maintenance happens. Restore EBS implies manual intervention.
